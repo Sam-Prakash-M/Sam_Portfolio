@@ -37,13 +37,13 @@ function Reveal({ children, delay = 0, style = {} }) {
 function SkillBar({ name, level, color }) {
   const [ref, v] = useInView();
   return (
-      <div ref={ref} className="skill-card">
-        <div className="skill-header">
-          <span className="skill-name">{name}</span>
-          <span className="skill-pct" style={{ color }}>{level}%</span>
-        </div>
-        <div className="bar-track"><div className="bar-fill" style={{ width: v ? level + "%" : "0%", background: `linear-gradient(90deg,${color},${color}77)` }} /></div>
+    <div ref={ref} className="skill-card">
+      <div className="skill-header">
+        <span className="skill-name">{name}</span>
+        <span className="skill-pct" style={{ color }}>{level}%</span>
       </div>
+      <div className="bar-track"><div className="bar-fill" style={{ width: v ? level + "%" : "0%", background: `linear-gradient(90deg,${color},${color}77)` }} /></div>
+    </div>
   );
 }
 
@@ -105,8 +105,8 @@ export default function App() {
   }, []);
 
   return (
-      <div className="portfolio-root">
-        <style>{`
+    <div className="portfolio-root">
+      <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -404,222 +404,222 @@ export default function App() {
         }
       `}</style>
 
-        {/* Cursor glow */}
-        <div className="cursor-glow" style={{ left: mouse.x - 175, top: mouse.y - 175 }} />
+      {/* Cursor glow */}
+      <div className="cursor-glow" style={{ left: mouse.x - 175, top: mouse.y - 175 }} />
 
-        {/* Particles */}
-        <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
-          {Array.from({ length: 30 }).map((_, i) => (
-              <div key={i} className="particle" style={{
-                width: Math.random() * 2.5 + 1 + "px", height: Math.random() * 2.5 + 1 + "px",
-                background: `rgba(${130 + Math.random() * 80},${140 + Math.random() * 80},255,${Math.random() * .3 + .06})`,
-                left: Math.random() * 100 + "%", top: Math.random() * 100 + "%",
-                "--dur": (10 + Math.random() * 14) + "s", "--delay": (-Math.random() * 10) + "s",
-              }} />
-          ))}
-        </div>
+      {/* Particles */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", overflow: "hidden" }}>
+        {Array.from({ length: 30 }).map((_, i) => (
+          <div key={i} className="particle" style={{
+            width: Math.random() * 2.5 + 1 + "px", height: Math.random() * 2.5 + 1 + "px",
+            background: `rgba(${130 + Math.random() * 80},${140 + Math.random() * 80},255,${Math.random() * .3 + .06})`,
+            left: Math.random() * 100 + "%", top: Math.random() * 100 + "%",
+            "--dur": (10 + Math.random() * 14) + "s", "--delay": (-Math.random() * 10) + "s",
+          }} />
+        ))}
+      </div>
 
-        {/* ===== NAV ===== */}
-        <nav className="main-nav">
+      {/* ===== NAV ===== */}
+      <nav className="main-nav">
         <span className="nav-logo" onClick={() => scrollTo("home")}>
           <span className="gt">sam</span><span style={{ color: "rgba(255,255,255,.25)" }}>prakash</span>
         </span>
-          <div className="nav-links">
-            {SECTIONS.map(s => <button key={s} className={`nav-btn ${active === s ? "active" : ""}`} onClick={() => scrollTo(s)}>{s}</button>)}
-          </div>
-          <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
-            <span style={{ transform: menuOpen ? "rotate(45deg) translate(4px,4px)" : "" }} />
-            <span style={{ opacity: menuOpen ? 0 : 1 }} />
-            <span style={{ transform: menuOpen ? "rotate(-45deg) translate(4px,-4px)" : "" }} />
-          </button>
-        </nav>
-
-        {/* Mobile menu */}
-        <div className="mobile-menu" style={{ display: menuOpen ? "flex" : undefined, opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? "auto" : "none" }}>
-          {SECTIONS.map(s => <button key={s} className="nav-btn" style={{ fontSize: 16 }} onClick={() => { scrollTo(s); setMenuOpen(false); }}>{s}</button>)}
+        <div className="nav-links">
+          {SECTIONS.map(s => <button key={s} className={`nav-btn ${active === s ? "active" : ""}`} onClick={() => scrollTo(s)}>{s}</button>)}
         </div>
+        <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
+          <span style={{ transform: menuOpen ? "rotate(45deg) translate(4px,4px)" : "" }} />
+          <span style={{ opacity: menuOpen ? 0 : 1 }} />
+          <span style={{ transform: menuOpen ? "rotate(-45deg) translate(4px,-4px)" : "" }} />
+        </button>
+      </nav>
 
-        {/* ========== HOME ========== */}
-        <section id="home" className="section" style={{ paddingTop: 70 }}>
-          <div className="container">
-            <div className="hero-grid">
-              <div>
-                <Reveal><div className="hero-badge"><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", animation: "pulse 2s infinite" }} /><span>Available for new opportunities</span></div></Reveal>
-                <Reveal delay={0.1}><h1 className="section-title hero-title">Hi, I'm<br /><span className="gt">Sam Prakash</span></h1></Reveal>
-                <Reveal delay={0.2}><p className="hero-sub">Backend engineer specializing in <span style={{ color: "#f89820" }}>Java</span>, <span style={{ color: "#6db33f" }}>Spring Boot</span>, and <span style={{ color: "#61dafb" }}>scalable microservices</span>.</p></Reveal>
-                <Reveal delay={0.25}><p className="hero-small">2+ years building crash analysis pipelines, automation tools, and enterprise backend systems at Zoho & Cognizant.</p></Reveal>
-                <Reveal delay={0.3}><div className="hero-btns"><button className="btn-primary" onClick={() => scrollTo("projects")}>View My Work ↗</button><a href="mailto:msamprakash05@gmail.com" className="btn-outline">Get In Touch</a></div></Reveal>
+      {/* Mobile menu */}
+      <div className="mobile-menu" style={{ display: menuOpen ? "flex" : undefined, opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? "auto" : "none" }}>
+        {SECTIONS.map(s => <button key={s} className="nav-btn" style={{ fontSize: 16 }} onClick={() => { scrollTo(s); setMenuOpen(false); }}>{s}</button>)}
+      </div>
+
+      {/* ========== HOME ========== */}
+      <section id="home" className="section" style={{ paddingTop: 70 }}>
+        <div className="container">
+          <div className="hero-grid">
+            <div>
+              <Reveal><div className="hero-badge"><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", animation: "pulse 2s infinite" }} /><span>Available for new opportunities</span></div></Reveal>
+              <Reveal delay={0.1}><h1 className="section-title hero-title">Hi, I'm<br /><span className="gt">Sam Prakash</span></h1></Reveal>
+              <Reveal delay={0.2}><p className="hero-sub">Backend engineer specializing in <span style={{ color: "#f89820" }}>Java</span>, <span style={{ color: "#6db33f" }}>Spring Boot</span>, and <span style={{ color: "#61dafb" }}>scalable microservices</span>.</p></Reveal>
+              <Reveal delay={0.25}><p className="hero-small">2+ years building crash analysis pipelines, automation tools, and enterprise backend systems at Zoho & Cognizant.</p></Reveal>
+              <Reveal delay={0.3}><div className="hero-btns"><button className="btn-primary" onClick={() => scrollTo("projects")}>View My Work ↗</button><a href="mailto:msamprakash05@gmail.com" className="btn-outline">Get In Touch</a></div></Reveal>
+            </div>
+            <div className="avatar-wrap">
+              <div className="avatar-glow" />
+              <div className="avatar-ring"><div className="avatar-ring-dot" /></div>
+              <div className="avatar-circle"><span className="avatar-text">SP</span></div>
+              {["☕ Java", "🚀 Spring Boot", "⚡ C++", "🔥 REST API"].map((t, i) => (
+                <div key={i} className="float-tag" style={{
+                  animation: `float ${5 + i * 1.2}s ease-in-out infinite`, animationDelay: `${i * -1.2}s`,
+                  ...[{ top: "8%", left: "2%" }, { bottom: "18%", left: "0%" }, { top: "10%", right: "2%" }, { bottom: "10%", right: "0%" }][i]
+                }}>{t}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== ABOUT ========== */}
+      <section id="about" className="section">
+        <div className="container section-inner">
+          <Reveal><div className="section-label">01 / About</div></Reveal>
+          <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>Building systems that <span className="gt">matter</span>.</h2></Reveal>
+          <div className="about-grid">
+            <div>
+              <Reveal delay={0.15}><p className="about-text">Backend engineer with 2+ years at <strong style={{ color: "#fff" }}>Zoho Corporation</strong> and <strong style={{ color: "#fff" }}>Cognizant</strong>, building scalable Java applications, automating crash analysis pipelines, and developing system-level tools in C/C++.</p></Reveal>
+              <Reveal delay={0.2}><p className="about-text">Skilled in Spring Boot, RESTful APIs, and enterprise Java with a strong foundation in debugging, performance optimization, and cross-platform development. Passionate about microservices architecture and building tools that solve real engineering problems.</p></Reveal>
+            </div>
+            <Reveal delay={0.2}>
+              <div className="stats-grid">
+                {[{ n: 2, s: "+", l: "Years Exp." }, { n: 60, s: "%", l: "Triage Saved" }, { n: 10, s: "+", l: "Components" }, { n: 4, s: "", l: "Projects" }].map((d, i) => (
+                  <div key={i} className="stat-card"><div className="stat-num"><Counter end={d.n} suffix={d.s} /></div><div className="stat-label">{d.l}</div></div>
+                ))}
               </div>
-              <div className="avatar-wrap">
-                <div className="avatar-glow" />
-                <div className="avatar-ring"><div className="avatar-ring-dot" /></div>
-                <div className="avatar-circle"><span className="avatar-text">SP</span></div>
-                {["☕ Java", "🚀 Spring Boot", "⚡ C++", "🔥 REST API"].map((t, i) => (
-                    <div key={i} className="float-tag" style={{
-                      animation: `float ${5 + i * 1.2}s ease-in-out infinite`, animationDelay: `${i * -1.2}s`,
-                      ...[{ top: "8%", left: "2%" }, { bottom: "18%", left: "0%" }, { top: "10%", right: "2%" }, { bottom: "10%", right: "0%" }][i]
-                    }}>{t}</div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== SKILLS ========== */}
+      <section id="skills" className="section">
+        <div className="container section-inner">
+          <Reveal><div className="section-label">02 / Skills</div></Reveal>
+          <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>My <span className="gt">toolkit</span>.</h2></Reveal>
+          <Reveal delay={0.15}>
+            <div className="skill-tabs">
+              {skills.map((g, i) => <button key={i} className={`skill-tab ${sTab === i ? "active" : ""}`} onClick={() => setSTab(i)}>{g.cat}</button>)}
+            </div>
+          </Reveal>
+          <div className="skills-grid">
+            {skills[sTab].items.map((s, i) => <SkillBar key={`${sTab}-${i}`} {...s} />)}
+          </div>
+          <Reveal delay={0.2}>
+            <div className="concepts-wrap">
+              <div style={{ width: "100%", marginBottom: 8 }}><span style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "rgba(255,255,255,.3)", letterSpacing: 2 }}>CORE CONCEPTS</span></div>
+              {["Microservices", "REST APIs", "Design Patterns", "JVM Tuning", "Multithreading", "CI/CD", "JUnit/Mockito", "Agile/Scrum", "JDBC", "Crash Dump Analysis"].map((c, i) => <span key={i} className="concept-tag">{c}</span>)}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ========== PROJECTS ========== */}
+      <section id="projects" className="section">
+        <div className="container section-inner">
+          <Reveal><div className="section-label">03 / Projects</div></Reveal>
+          <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>Things I've <span className="gt">built</span>.</h2></Reveal>
+          <div className="projects-grid">
+            {projects.map((p, i) => (
+              <Reveal key={i} delay={i * 0.06}>
+                <div className="project-card">
+                  <div className="project-header" style={{ background: `linear-gradient(135deg,${p.color}22,${p.color}08)` }}>
+                    <span className="project-num">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="project-icon">{p.icon}</span>
+                  </div>
+                  <div className="project-body">
+                    <h3 className="project-title">{p.title}</h3>
+                    <p className="project-desc">{p.desc}</p>
+                    <div className="project-tags">{p.tech.map((t, j) => <span key={j} className="concept-tag" style={{ borderColor: `${p.color}22`, color: `${p.color}99` }}>{t}</span>)}</div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========== EXPERIENCE ========== */}
+      <section id="experience" className="section">
+        <div className="container section-inner">
+          <Reveal><div className="section-label">04 / Experience</div></Reveal>
+          <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>Where I've <span className="gt">worked</span>.</h2></Reveal>
+          <div className="exp-timeline">
+            {experience.map((e, i) => (
+              <Reveal key={i} delay={i * 0.08}>
+                <div className="exp-item" onClick={() => setExpOpen(expOpen === i ? -1 : i)}>
+                  <div className={`exp-dot ${e.current ? "current" : ""}`} />
+                  <div className="exp-card" style={{ borderLeft: `3px solid ${e.color}` }}>
+                    <div className="exp-header">
+                      <div>
+                        <div className="exp-role">{e.role}</div>
+                        <div className="exp-company" style={{ color: e.color }}>{e.co}</div>
+                        {e.team && <div className="exp-team">{e.team}</div>}
+                      </div>
+                      <div className="exp-meta">
+                        <div className="exp-date">{e.period}</div>
+                        <div className="exp-loc">{e.loc}</div>
+                      </div>
+                    </div>
+                    <div className="exp-details" style={{ maxHeight: expOpen === i ? 400 : 0, marginTop: expOpen === i ? 14 : 0 }}>
+                      {e.pts.map((pt, j) => <div key={j} className="exp-point"><span className="exp-bullet" style={{ color: e.color }}>▹</span><p className="exp-text">{pt}</p></div>)}
+                      <div className="exp-tags">{e.tags.map((t, j) => <span key={j} className="concept-tag">{t}</span>)}</div>
+                    </div>
+                    <span className="exp-toggle">{expOpen === i ? "▲ collapse" : "▼ expand"}</span>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={0.2}>
+            <div className="info-grid">
+              <div className="info-card">
+                <div className="info-title">🎓 Education</div>
+                <p style={{ fontWeight: 600, fontSize: 14 }}>BE Mechatronics — Thiagarajar College</p>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,.3)", marginBottom: 12 }}>2018–2022 · Madurai, TN</p>
+                <p style={{ fontWeight: 600, fontSize: 14 }}>Graduate Training — Zoho School</p>
+                <p style={{ fontSize: 12, color: "rgba(255,255,255,.3)" }}>Oct 2023–Jan 2024 · Java, MySQL, Servlets</p>
+              </div>
+              <div className="info-card">
+                <div className="info-title">📜 Certifications</div>
+                {["Java SE — HackerRank", "Spring Boot — Udemy", "Problem Solving — HackerRank"].map((c, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#667eea", flexShrink: 0 }} />
+                    <span style={{ color: "rgba(255,255,255,.5)", fontSize: 14 }}>{c}</span>
+                  </div>
                 ))}
               </div>
             </div>
-          </div>
-        </section>
+          </Reveal>
+        </div>
+      </section>
 
-        {/* ========== ABOUT ========== */}
-        <section id="about" className="section">
-          <div className="container section-inner">
-            <Reveal><div className="section-label">01 / About</div></Reveal>
-            <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>Building systems that <span className="gt">matter</span>.</h2></Reveal>
-            <div className="about-grid">
-              <div>
-                <Reveal delay={0.15}><p className="about-text">Backend engineer with 2+ years at <strong style={{ color: "#fff" }}>Zoho Corporation</strong> and <strong style={{ color: "#fff" }}>Cognizant</strong>, building scalable Java applications, automating crash analysis pipelines, and developing system-level tools in C/C++.</p></Reveal>
-                <Reveal delay={0.2}><p className="about-text">Skilled in Spring Boot, RESTful APIs, and enterprise Java with a strong foundation in debugging, performance optimization, and cross-platform development. Passionate about microservices architecture and building tools that solve real engineering problems.</p></Reveal>
+      {/* ========== CONTACT ========== */}
+      <section id="contact" className="section">
+        <div className="container section-inner" style={{ maxWidth: 700, textAlign: "center" }}>
+          <Reveal><div className="section-label" style={{ justifyContent: "center" }}>05 / Contact</div></Reveal>
+          <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>Let's <span className="gt">connect</span>.</h2></Reveal>
+          <Reveal delay={0.15}><p style={{ color: "rgba(255,255,255,.4)", fontSize: 15, lineHeight: 1.8, maxWidth: 450, margin: "0 auto 36px" }}>Open to Java backend roles, engineering challenges, or collaboration opportunities.</p></Reveal>
+          <Reveal delay={0.2}>
+            <div className="contact-card">
+              <div className="contact-grid">
+                <div><div className="contact-label">Email</div><a href="mailto:msamprakash05@gmail.com" style={{ color: "#667eea", textDecoration: "none" }} className="contact-value">msamprakash05@gmail.com</a></div>
+                <div><div className="contact-label">Phone</div><div className="contact-value" style={{ color: "#fff" }}>+91 6385812669</div></div>
+                <div><div className="contact-label">Location</div><div className="contact-value" style={{ color: "#fff" }}>Chennai, India</div></div>
               </div>
-              <Reveal delay={0.2}>
-                <div className="stats-grid">
-                  {[{ n: 2, s: "+", l: "Years Exp." }, { n: 60, s: "%", l: "Triage Saved" }, { n: 10, s: "+", l: "Components" }, { n: 4, s: "", l: "Projects" }].map((d, i) => (
-                      <div key={i} className="stat-card"><div className="stat-num"><Counter end={d.n} suffix={d.s} /></div><div className="stat-label">{d.l}</div></div>
-                  ))}
-                </div>
-              </Reveal>
+              <div className="social-links">
+                {socials.map((s, i) => <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" className="social-btn"
+                  onMouseEnter={e => { e.target.style.color = s.c; e.target.style.borderColor = s.c + "44"; }}
+                  onMouseLeave={e => { e.target.style.color = "rgba(255,255,255,.45)"; e.target.style.borderColor = "rgba(255,255,255,.06)"; }}>
+                  {s.name}
+                </a>)}
+              </div>
             </div>
-          </div>
-        </section>
+          </Reveal>
+          <Reveal delay={0.25}>
+            <a href="mailto:msamprakash05@gmail.com" className="btn-primary" style={{ display: "inline-block", textDecoration: "none", padding: "16px 40px", fontSize: 15 }}>
+              ✉️ Send Me an Email
+            </a>
+          </Reveal>
+        </div>
+      </section>
 
-        {/* ========== SKILLS ========== */}
-        <section id="skills" className="section">
-          <div className="container section-inner">
-            <Reveal><div className="section-label">02 / Skills</div></Reveal>
-            <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>My <span className="gt">toolkit</span>.</h2></Reveal>
-            <Reveal delay={0.15}>
-              <div className="skill-tabs">
-                {skills.map((g, i) => <button key={i} className={`skill-tab ${sTab === i ? "active" : ""}`} onClick={() => setSTab(i)}>{g.cat}</button>)}
-              </div>
-            </Reveal>
-            <div className="skills-grid">
-              {skills[sTab].items.map((s, i) => <SkillBar key={`${sTab}-${i}`} {...s} />)}
-            </div>
-            <Reveal delay={0.2}>
-              <div className="concepts-wrap">
-                <div style={{ width: "100%", marginBottom: 8 }}><span style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "rgba(255,255,255,.3)", letterSpacing: 2 }}>CORE CONCEPTS</span></div>
-                {["Microservices", "REST APIs", "Design Patterns", "JVM Tuning", "Multithreading", "CI/CD", "JUnit/Mockito", "Agile/Scrum", "JDBC", "Crash Dump Analysis"].map((c, i) => <span key={i} className="concept-tag">{c}</span>)}
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ========== PROJECTS ========== */}
-        <section id="projects" className="section">
-          <div className="container section-inner">
-            <Reveal><div className="section-label">03 / Projects</div></Reveal>
-            <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>Things I've <span className="gt">built</span>.</h2></Reveal>
-            <div className="projects-grid">
-              {projects.map((p, i) => (
-                  <Reveal key={i} delay={i * 0.06}>
-                    <div className="project-card">
-                      <div className="project-header" style={{ background: `linear-gradient(135deg,${p.color}22,${p.color}08)` }}>
-                        <span className="project-num">{String(i + 1).padStart(2, "0")}</span>
-                        <span className="project-icon">{p.icon}</span>
-                      </div>
-                      <div className="project-body">
-                        <h3 className="project-title">{p.title}</h3>
-                        <p className="project-desc">{p.desc}</p>
-                        <div className="project-tags">{p.tech.map((t, j) => <span key={j} className="concept-tag" style={{ borderColor: `${p.color}22`, color: `${p.color}99` }}>{t}</span>)}</div>
-                      </div>
-                    </div>
-                  </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ========== EXPERIENCE ========== */}
-        <section id="experience" className="section">
-          <div className="container section-inner">
-            <Reveal><div className="section-label">04 / Experience</div></Reveal>
-            <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>Where I've <span className="gt">worked</span>.</h2></Reveal>
-            <div className="exp-timeline">
-              {experience.map((e, i) => (
-                  <Reveal key={i} delay={i * 0.08}>
-                    <div className="exp-item" onClick={() => setExpOpen(expOpen === i ? -1 : i)}>
-                      <div className={`exp-dot ${e.current ? "current" : ""}`} />
-                      <div className="exp-card" style={{ borderLeft: `3px solid ${e.color}` }}>
-                        <div className="exp-header">
-                          <div>
-                            <div className="exp-role">{e.role}</div>
-                            <div className="exp-company" style={{ color: e.color }}>{e.co}</div>
-                            {e.team && <div className="exp-team">{e.team}</div>}
-                          </div>
-                          <div className="exp-meta">
-                            <div className="exp-date">{e.period}</div>
-                            <div className="exp-loc">{e.loc}</div>
-                          </div>
-                        </div>
-                        <div className="exp-details" style={{ maxHeight: expOpen === i ? 400 : 0, marginTop: expOpen === i ? 14 : 0 }}>
-                          {e.pts.map((pt, j) => <div key={j} className="exp-point"><span className="exp-bullet" style={{ color: e.color }}>▹</span><p className="exp-text">{pt}</p></div>)}
-                          <div className="exp-tags">{e.tags.map((t, j) => <span key={j} className="concept-tag">{t}</span>)}</div>
-                        </div>
-                        <span className="exp-toggle">{expOpen === i ? "▲ collapse" : "▼ expand"}</span>
-                      </div>
-                    </div>
-                  </Reveal>
-              ))}
-            </div>
-
-            <Reveal delay={0.2}>
-              <div className="info-grid">
-                <div className="info-card">
-                  <div className="info-title">🎓 Education</div>
-                  <p style={{ fontWeight: 600, fontSize: 14 }}>BE Mechatronics — Thiagarajar College</p>
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,.3)", marginBottom: 12 }}>2018–2022 · Madurai, TN</p>
-                  <p style={{ fontWeight: 600, fontSize: 14 }}>Graduate Training — Zoho School</p>
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,.3)" }}>Oct 2023–Jan 2024 · Java, MySQL, Servlets</p>
-                </div>
-                <div className="info-card">
-                  <div className="info-title">📜 Certifications</div>
-                  {["Java SE — HackerRank", "Spring Boot — Udemy", "Problem Solving — HackerRank"].map((c, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#667eea", flexShrink: 0 }} />
-                        <span style={{ color: "rgba(255,255,255,.5)", fontSize: 14 }}>{c}</span>
-                      </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ========== CONTACT ========== */}
-        <section id="contact" className="section">
-          <div className="container section-inner" style={{ maxWidth: 700, textAlign: "center" }}>
-            <Reveal><div className="section-label" style={{ justifyContent: "center" }}>05 / Contact</div></Reveal>
-            <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>Let's <span className="gt">connect</span>.</h2></Reveal>
-            <Reveal delay={0.15}><p style={{ color: "rgba(255,255,255,.4)", fontSize: 15, lineHeight: 1.8, maxWidth: 450, margin: "0 auto 36px" }}>Open to Java backend roles, engineering challenges, or collaboration opportunities.</p></Reveal>
-            <Reveal delay={0.2}>
-              <div className="contact-card">
-                <div className="contact-grid">
-                  <div><div className="contact-label">Email</div><a href="mailto:msamprakash05@gmail.com" style={{ color: "#667eea", textDecoration: "none" }} className="contact-value">msamprakash05@gmail.com</a></div>
-                  <div><div className="contact-label">Phone</div><div className="contact-value" style={{ color: "#fff" }}>+91 6385812669</div></div>
-                  <div><div className="contact-label">Location</div><div className="contact-value" style={{ color: "#fff" }}>Chennai, India</div></div>
-                </div>
-                <div className="social-links">
-                  {socials.map((s, i) => <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" className="social-btn"
-                                            onMouseEnter={e => { e.target.style.color = s.c; e.target.style.borderColor = s.c + "44"; }}
-                                            onMouseLeave={e => { e.target.style.color = "rgba(255,255,255,.45)"; e.target.style.borderColor = "rgba(255,255,255,.06)"; }}>
-                    {s.name}
-                  </a>)}
-                </div>
-              </div>
-            </Reveal>
-            <Reveal delay={0.25}>
-              <a href="mailto:msamprakash05@gmail.com" className="btn-primary" style={{ display: "inline-block", textDecoration: "none", padding: "16px 40px", fontSize: 15 }}>
-                ✉️ Send Me an Email
-              </a>
-            </Reveal>
-          </div>
-        </section>
-
-        <footer className="footer">© 2026 SAM PRAKASH M — BUILT WITH ❤️ AND JAVA</footer>
-      </div>
+      <footer className="footer">© 2026 SAM PRAKASH M — BUILT WITH ❤️ AND JAVA</footer>
+    </div>
   );
 }
