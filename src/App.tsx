@@ -81,7 +81,7 @@ const socials = [
   { name: "GitHub", url: "https://github.com/Sam-Prakash-M", c: "#6e5494" },
   { name: "LeetCode", url: "https://leetcode.com/u/Sam_Prakash/", c: "#ffa116" },
   { name: "HackerRank", url: "https://hackerrank.com/profile/msamprakash05", c: "#2ec866" },
-  { name: "Portfolio", url: "https://sam-prakash-porfolio.onrender.com", c: "#667eea" },
+  { name: "Portfolio", url: "https://samprakash.vercel.app", c: "#667eea" },
 ];
 
 export default function App() {
