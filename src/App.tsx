@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 
 const SECTIONS = ["home", "about", "skills", "projects", "experience", "contact"];
-const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
 function useInView(t = 0.1) {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const [v, setV] = useState(false);
   useEffect(() => {
     const el = ref.current;
@@ -13,10 +13,10 @@ function useInView(t = 0.1) {
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
-  return [ref, v];
+  return [ref, v] as const;
 }
 
-function Counter({ end, suffix = "" }) {
+function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
   const [c, setC] = useState(0);
   const [ref, v] = useInView();
   useEffect(() => {
@@ -29,12 +29,12 @@ function Counter({ end, suffix = "" }) {
   return <span ref={ref}>{c}{suffix}</span>;
 }
 
-function Reveal({ children, delay = 0, style = {} }) {
+function Reveal({ children, delay = 0, style = {} }: { children: React.ReactNode; delay?: number; style?: React.CSSProperties }) {
   const [ref, v] = useInView();
   return <div ref={ref} style={{ ...style, opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(35px)", transition: `all 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}s` }}>{children}</div>;
 }
 
-function SkillBar({ name, level, color }) {
+function SkillBar({ name, level, color }: { name: string; level: number; color: string }) {
   const [ref, v] = useInView();
   return (
     <div ref={ref} className="skill-card">
@@ -98,7 +98,7 @@ export default function App() {
         if (el && el.getBoundingClientRect().top < 250) { setActive(s); break; }
       }
     };
-    const onMouse = (e) => setMouse({ x: e.clientX, y: e.clientY });
+    const onMouse = (e: MouseEvent) => setMouse({ x: e.clientX, y: e.clientY });
     window.addEventListener("scroll", onScroll);
     window.addEventListener("mousemove", onMouse);
     return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("mousemove", onMouse); };
@@ -415,7 +415,7 @@ export default function App() {
             background: `rgba(${130 + Math.random() * 80},${140 + Math.random() * 80},255,${Math.random() * .3 + .06})`,
             left: Math.random() * 100 + "%", top: Math.random() * 100 + "%",
             "--dur": (10 + Math.random() * 14) + "s", "--delay": (-Math.random() * 10) + "s",
-          }} />
+          } as React.CSSProperties} />
         ))}
       </div>
 
@@ -604,8 +604,8 @@ export default function App() {
               </div>
               <div className="social-links">
                 {socials.map((s, i) => <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" className="social-btn"
-                  onMouseEnter={e => { e.target.style.color = s.c; e.target.style.borderColor = s.c + "44"; }}
-                  onMouseLeave={e => { e.target.style.color = "rgba(255,255,255,.45)"; e.target.style.borderColor = "rgba(255,255,255,.06)"; }}>
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = s.c; (e.currentTarget as HTMLAnchorElement).style.borderColor = s.c + "44"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,.45)"; (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,.06)"; }}>
                   {s.name}
                 </a>)}
               </div>
