@@ -498,7 +498,7 @@ export default function App() {
               <Reveal><div className="hero-badge"><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", animation: "pulse 2s infinite" }} /><span>Available for new opportunities</span></div></Reveal>
               <Reveal delay={0.1}><h1 className="section-title hero-title">Hi, I'm<br /><span className="gt">Sam Prakash</span></h1></Reveal>
               <Reveal delay={0.2}><p className="hero-sub">Backend engineer specializing in <span style={{ color: "#f89820" }}>Java</span>, <span style={{ color: "#6db33f" }}>Spring Boot</span>, and <span style={{ color: "#61dafb" }}>scalable microservices</span>.</p></Reveal>
-              <Reveal delay={0.25}><p className="hero-small">2+ years building crash analysis pipelines, automation tools, and enterprise backend systems at Zoho & Cognizant.</p></Reveal>
+              <Reveal delay={0.25}><p className="hero-small">3+ years building crash analysis pipelines, automation tools, and enterprise backend systems at Zoho & Cognizant.</p></Reveal>
               <Reveal delay={0.3}><div className="hero-btns"><button className="btn-primary" onClick={() => scrollTo("projects")}>View My Work ↗</button><a href="mailto:msamprakash05@gmail.com" className="btn-outline">Get In Touch</a></div></Reveal>
             </div>
             <div className="avatar-wrap">
