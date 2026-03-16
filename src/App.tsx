@@ -528,7 +528,7 @@ export default function App() {
             </div>
             <Reveal delay={0.2}>
               <div className="stats-grid">
-                {[{ n: 2, s: "+", l: "Years Exp." }, { n: 60, s: "%", l: "Triage Saved" }, { n: 10, s: "+", l: "Components" }, { n: 4, s: "", l: "Projects" }].map((d, i) => (
+                {[{ n: 3, s: "+", l: "Years Exp." }, { n: 60, s: "%", l: "Triage Saved" }, { n: 10, s: "+", l: "Components" }, { n: 4, s: "", l: "Projects" }].map((d, i) => (
                   <div key={i} className="stat-card"><div className="stat-num"><Counter end={d.n} suffix={d.s} /></div><div className="stat-label">{d.l}</div></div>
                 ))}
               </div>
