@@ -523,7 +523,7 @@ export default function App() {
           <Reveal delay={0.1}><h2 className="section-title" style={{ fontSize: "clamp(2rem,4vw,3rem)" }}>Building systems that <span className="gt">matter</span>.</h2></Reveal>
           <div className="about-grid">
             <div>
-              <Reveal delay={0.15}><p className="about-text">Backend engineer with 2+ years at <strong style={{ color: "#fff" }}>Zoho Corporation</strong> and <strong style={{ color: "#fff" }}>Cognizant</strong>, building scalable Java applications, automating crash analysis pipelines, and developing system-level tools in C/C++.</p></Reveal>
+              <Reveal delay={0.15}><p className="about-text">Backend engineer with 3+ years at <strong style={{ color: "#fff" }}>Zoho Corporation</strong> and <strong style={{ color: "#fff" }}>Cognizant</strong>, building scalable Java applications, automating crash analysis pipelines, and developing system-level tools in C/C++.</p></Reveal>
               <Reveal delay={0.2}><p className="about-text">Skilled in Spring Boot, RESTful APIs, and enterprise Java with a strong foundation in debugging, performance optimization, and cross-platform development. Passionate about microservices architecture and building tools that solve real engineering problems.</p></Reveal>
             </div>
             <Reveal delay={0.2}>
