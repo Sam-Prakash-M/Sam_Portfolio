@@ -489,6 +489,30 @@
   letter-spacing: 0.3px;
 }
 
+/* Mobile tech tags — visible on small screens only */
+.mobile-tech-tags {
+  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 0 10px;
+  text-align: center;
+}
+
+.mobile-tech-tag {
+  padding: 8px 18px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: #818cf8;
+  letter-spacing: 0.3px;
+}
+
 /* ===== ABOUT SECTION ===== */
 .about-grid {
   display: grid;
@@ -1167,7 +1191,8 @@
 
   .hero-btns { justify-content: center; }
   .avatar-wrap { margin-top: 12px; }
-  .float-tag { display: none; }
+  .float-tag { display: none !important; }
+  .mobile-tech-tags { display: flex !important; }
 
   .section-inner { padding: 100px 0 60px; }
 
@@ -1214,6 +1239,9 @@
     text-align: center;
     padding: 14px 24px;
   }
+
+  .mobile-tech-tags { gap: 6px; margin-top: 14px; }
+  .mobile-tech-tag { padding: 7px 14px; font-size: 12px; }
 
   .about-text { font-size: 14px; }
   .stats-grid { gap: 10px; }

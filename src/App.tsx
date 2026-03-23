@@ -92,6 +92,8 @@ const skills = [
       { name: "Redis", level: 72, color: "#dc382d" },
       { name: "Docker / Jenkins", level: 68, color: "#2496ed" },
       { name: "Git / Maven", level: 88, color: "#f05032" },
+      { name: "Grafana / WinDbg", level: 70, color: "#f46800" },
+      { name: "Postman / Tomcat", level: 85, color: "#ff6c37" },
     ]
   },
 ];
@@ -99,29 +101,29 @@ const skills = [
 const projects = [
   {
     title: "Railway Booking System",
-    desc: "End-to-end reservation platform with authentication, seat search, booking management, admin panel, dynamic fare calculation, JDBC pooling, and CSRF protection.",
-    tech: ["Java", "Servlets", "JSP", "MySQL"],
+    desc: "Train reservation platform with smart search, PNR tracking, QR ticketing, dynamic fares, and waitlist promotion. Integrated PayPal, Razorpay, Cashfree gateways; jBCrypt hashing, session auth, multi-step OTP recovery via SMTP.",
+    tech: ["Java", "Jakarta EE", "JSP", "MongoDB"],
     color: "#6366f1",
     icon: "🚂",
   },
   {
     title: "E-Commerce Microservices",
-    desc: "Microservices backend (Product, Order, Auth, Payment) with RabbitMQ messaging, Resilience4j circuit breakers, Redis caching reducing API response by 45%.",
+    desc: "Architected backend with independent services (Product, Order, Auth, Payment) communicating via RabbitMQ; Eureka for discovery and Spring Cloud Gateway for routing. Redis caching reducing response time by 45%; Resilience4j circuit breakers; fully containerized with Docker Compose.",
     tech: ["Spring Boot", "Docker", "RabbitMQ", "Redis"],
     color: "#ec4899",
     icon: "🛒",
   },
   {
     title: "URL Shortener Service",
-    desc: "High-throughput shortener with Base62 encoding, custom aliases, expiration policies, click analytics, sub-10ms redirect via Redis, Bucket4j rate limiting.",
-    tech: ["Spring Boot", "MongoDB", "Redis"],
+    desc: "REST API with Base62 encoding, custom aliases, link expiration, and click analytics with geo-tracking. Redis caching for sub-10ms redirects; Bucket4j rate limiting, Spring Security API key auth, and OpenAPI documentation.",
+    tech: ["Spring Boot", "PostgreSQL", "Redis"],
     color: "#06b6d4",
     icon: "🔗",
   },
   {
-    title: "Real-Time Chat App",
-    desc: "Messaging platform with private/group chats, typing indicators, read receipts via STOMP over WebSocket, JWT auth, paginated history.",
-    tech: ["Spring Boot", "WebSocket", "React", "PostgreSQL"],
+    title: "Real-Time Chat Application",
+    desc: "Private and group messaging with typing indicators, read receipts, and online presence via STOMP over WebSocket. JWT auth with refresh tokens, MongoDB message persistence, paginated history API, and file/image sharing support.",
+    tech: ["Spring Boot", "WebSocket", "React", "MongoDB"],
     color: "#10b981",
     icon: "💬",
   },
@@ -131,31 +133,30 @@ const experience = [
   {
     role: "Member of Technical Staff",
     co: "Zoho Corporation",
-    team: "ManageEngine Endpoint Central — UEMS Agent Framework",
+    team: "ManageEngine Endpoint Central",
     period: "Jul 2024 — Present",
     loc: "Chennai",
     current: true,
     color: "#6366f1",
     pts: [
-      "Built automated crash dump analysis tool with Zoho Desk API — reduces triage time by 60%",
-      "Developed Java hourly log parser for auto-diagnosing support tickets",
-      "Created C++ JSON framework using jsoncpp across 10+ agent components",
-      "Integrated crash analytics into Grafana + built Servlet/JSP dashboard",
+      "Built crash dump analysis tool integrated with Zoho Desk API — parses tickets, fetches PDBs, runs WinDbg CLI resolution, reducing triage time by 60%",
+      "Developed Java-based hourly log parser that auto-analyzes tickets, identifies root causes, and posts diagnostics back",
+      "Created unified JSON framework in C++ using jsoncpp across 10+ agent components; integrated crash analytics into Grafana dashboards",
     ],
     tags: ["Java", "C++", "Grafana", "WinDbg"],
   },
   {
-    role: "Incubation Trainee",
+    role: "Graduate Trainee",
     co: "Zoho Corporation",
-    team: undefined,
-    period: "Apr — Jul 2024",
-    loc: "Chennai",
+    team: "Zoho School of Learning → Incubation",
+    period: "Oct 2023 — Jul 2024",
+    loc: "Tenkasi / Chennai",
     current: false,
     color: "#8b5cf6",
     pts: [
-      "Gained expertise in Windows networking (Domains, Active Directory) and built C/C++ network diagnostic tools",
+      "Trained in Java, MySQL, Servlets, JSP at Zoho School; transitioned to incubation with Windows networking (AD) and C/C++ system tools",
     ],
-    tags: ["C/C++", "Windows Server"],
+    tags: ["Java", "MySQL", "C/C++", "Windows Server"],
   },
   {
     role: "Programmer Analyst",
@@ -166,8 +167,7 @@ const experience = [
     current: false,
     color: "#06b6d4",
     pts: [
-      "Full Stack Java & MuleSoft API training; built POC apps using Anypoint Platform",
-      "Developed responsive web interfaces with HTML5, CSS3, Bootstrap",
+      "Full Stack Java training and MuleSoft API-led connectivity; built POC apps and responsive web interfaces",
     ],
     tags: ["Java", "MuleSoft", "HTML/CSS"],
   },
@@ -352,8 +352,9 @@ export default function App() {
               </Reveal>
               <Reveal delay={0.25}>
                 <p className="about-text">
-                  Currently at Zoho's <strong>ManageEngine Endpoint Central</strong> team, working on the UEMS Agent Framework
-                  — building crash dump analyzers, diagnostic dashboards, and C++ JSON frameworks used across 10+ agent components.
+                  Currently at Zoho's <strong>ManageEngine Endpoint Central</strong> team
+                  — building crash dump analysis tools integrated with Zoho Desk API, unified C++ JSON frameworks across 10+ agent components,
+                  and crash analytics dashboards with Grafana.
                 </p>
               </Reveal>
             </div>
@@ -499,21 +500,37 @@ export default function App() {
             ))}
           </div>
 
-          {/* Education & Certifications */}
+          {/* Education, Achievements & Certifications */}
           <Reveal delay={0.2}>
             <div className="info-grid">
               <div className="info-card">
                 <div className="info-title">🎓 Education</div>
                 <div className="info-item">
-                  <div className="info-item-title">BE Mechatronics — Thiagarajar College of Engineering</div>
+                  <div className="info-item-title">BE in Mechatronics Engg. — Thiagarajar College of Engineering</div>
                   <div className="info-item-sub">2018 – 2022 · Madurai, Tamil Nadu</div>
                 </div>
                 <div className="info-item">
-                  <div className="info-item-title">Graduate Training — Zoho School of Learning</div>
-                  <div className="info-item-sub">Oct 2023 – Jan 2024 · Java, MySQL, Servlets, DSA</div>
+                  <div className="info-item-title">HSC (Higher Secondary) — Amir Jamal HSS</div>
+                  <div className="info-item-sub">2017 – 2018 · Tirunelveli, Tamil Nadu · <strong style={{ color: "#10b981" }}>200/200 in Mathematics</strong></div>
                 </div>
               </div>
 
+              <div className="info-card">
+                <div className="info-title">🏆 Achievements</div>
+                <div className="cert-item">
+                  <div className="cert-dot" style={{ background: "#f59e0b", boxShadow: "0 0 8px rgba(245, 158, 11, 0.4)" }} />
+                  <span className="cert-text"><strong style={{ color: "#f59e0b" }}>200/200</strong> in Maths — 12th HSC</span>
+                </div>
+                <div className="cert-item">
+                  <div className="cert-dot" style={{ background: "#f59e0b", boxShadow: "0 0 8px rgba(245, 158, 11, 0.4)" }} />
+                  <span className="cert-text"><strong style={{ color: "#f59e0b" }}>100/100</strong> in Maths — 10th SSLC</span>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.25}>
+            <div className="info-grid" style={{ marginTop: 18 }}>
               <div className="info-card">
                 <div className="info-title">📜 Certifications</div>
                 {[
@@ -527,6 +544,18 @@ export default function App() {
                     <span className="cert-text">{c}</span>
                   </div>
                 ))}
+              </div>
+
+              <div className="info-card">
+                <div className="info-title">🔗 Profiles</div>
+                <div className="cert-item">
+                  <div className="cert-dot" style={{ background: "#ffa116", boxShadow: "0 0 8px rgba(255, 161, 22, 0.3)" }} />
+                  <span className="cert-text">LeetCode: <a href="https://leetcode.com/u/Sam_Prakash/" target="_blank" rel="noopener noreferrer" style={{ color: "#ffa116", textDecoration: "none" }}>Sam_Prakash</a></span>
+                </div>
+                <div className="cert-item">
+                  <div className="cert-dot" style={{ background: "#2ec866", boxShadow: "0 0 8px rgba(46, 200, 102, 0.3)" }} />
+                  <span className="cert-text">HackerRank: <a href="https://hackerrank.com/profile/msamprakash05" target="_blank" rel="noopener noreferrer" style={{ color: "#2ec866", textDecoration: "none" }}>msamprakash05</a></span>
+                </div>
               </div>
             </div>
           </Reveal>
