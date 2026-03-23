@@ -313,10 +313,10 @@ export default function App() {
                   animation: `float ${5 + i * 1.2}s ease-in-out infinite`,
                   animationDelay: `${i * -1.2}s`,
                   ...[
-                    { top: "6%", left: "0%" },
-                    { bottom: "20%", left: "-2%" },
-                    { top: "8%", right: "0%" },
-                    { bottom: "8%", right: "-2%" }
+                    { top: "5%", left: "10%" },
+                    { bottom: "5%", left: "5%" },
+                    { top: "5%", right: "10%" },
+                    { bottom: "5%", right: "5%" }
                   ][i]
                 }}>{t}</div>
               ))}
