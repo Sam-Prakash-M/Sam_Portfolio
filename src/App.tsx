@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from "react";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef, type ReactNode } from "react";
+import {
+  motion, useScroll, useTransform, useSpring, useInView, AnimatePresence,
+} from "framer-motion";
 import {
   FaJava, FaReact, FaDocker, FaGitAlt, FaLinkedinIn,
   FaGithub, FaHackerrank, FaDatabase, FaEnvelope, FaPhone,
-  FaMapMarkerAlt, FaDownload, FaExternalLinkAlt, FaChevronDown,
-  FaChevronUp,
+  FaMapMarkerAlt, FaDownload, FaChevronDown,
+  FaChevronUp, FaArrowRight,
 } from "react-icons/fa";
 import {
   SiSpringboot, SiPostgresql, SiMongodb, SiRedis,
@@ -14,162 +16,132 @@ import {
 } from "react-icons/si";
 import "./App.css";
 
-// ─── Scroll helper ───
+/* ═══════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════ */
+
 const scrollTo = (id: string) =>
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
-// ─── Animated section wrapper ───
-function Section({
-  id, children, className = "",
-}: { id: string; children: React.ReactNode; className?: string }) {
+// Reveal on scroll
+function Reveal({ children, delay = 0, className = "", direction = "up" }: {
+  children: ReactNode; delay?: number; className?: string; direction?: "up" | "left" | "right";
+}) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const dirs = { up: { y: 60 }, left: { x: -60 }, right: { x: 60 } };
   return (
-    <section id={id} ref={ref} className={`section ${className}`}>
-      <motion.div
-        initial={{ opacity: 0, y: 60 }}
-        animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="container"
-      >
-        {children}
-      </motion.div>
-    </section>
+    <motion.div ref={ref} className={className}
+      initial={{ opacity: 0, ...dirs[direction] }}
+      animate={inView ? { opacity: 1, x: 0, y: 0 } : {}}
+      transition={{ duration: 0.85, delay, ease: [0.16, 1, 0.3, 1] }}
+    >{children}</motion.div>
   );
 }
 
-// ─── Stagger reveal children ───
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
-};
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
-};
-
-// ─── Typewriter ───
-function Typewriter({ words }: { words: string[] }) {
-  const [idx, setIdx] = useState(0);
-  const [text, setText] = useState("");
-  const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    const word = words[idx];
-    const speed = deleting ? 40 : 80;
-    const timer = setTimeout(() => {
-      if (!deleting) {
-        setText(word.slice(0, text.length + 1));
-        if (text.length + 1 === word.length) setTimeout(() => setDeleting(true), 1800);
-      } else {
-        setText(word.slice(0, text.length - 1));
-        if (text.length === 0) { setDeleting(false); setIdx((idx + 1) % words.length); }
-      }
-    }, speed);
-    return () => clearTimeout(timer);
-  }, [text, deleting, idx, words]);
-
-  return (
-    <span className="typewriter">
-      {text}<span className="cursor">|</span>
-    </span>
-  );
-}
-
-// ─── Counter animation ───
+// Animated counter
 function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
+  const [c, setC] = useState(0);
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
-
+  const inView = useInView(ref, { once: true });
   useEffect(() => {
-    if (!isInView) return;
-    let current = 0;
-    const step = end / 60;
-    const timer = setInterval(() => {
-      current += step;
-      if (current >= end) { setCount(end); clearInterval(timer); }
-      else setCount(Math.floor(current));
-    }, 20);
-    return () => clearInterval(timer);
-  }, [isInView, end]);
-
-  return <span ref={ref}>{count}{suffix}</span>;
+    if (!inView) return;
+    let n = 0;
+    const s = end / 50;
+    const t = setInterval(() => { n += s; if (n >= end) { setC(end); clearInterval(t); } else setC(Math.floor(n)); }, 25);
+    return () => clearInterval(t);
+  }, [inView, end]);
+  return <span ref={ref}>{c}{suffix}</span>;
 }
 
-// ================================================================
-// DATA
-// ================================================================
+// 3D tilt card
+function TiltCard({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [over, setOver] = useState(false);
+  const handleMove = (e: React.MouseEvent) => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    setPos({ x: (e.clientX - r.left) / r.width - 0.5, y: (e.clientY - r.top) / r.height - 0.5 });
+  };
+  return (
+    <motion.div ref={ref} className={`tilt-card ${className}`}
+      onMouseMove={handleMove} onMouseEnter={() => setOver(true)} onMouseLeave={() => { setOver(false); setPos({ x: 0, y: 0 }); }}
+      style={{
+        transform: over
+          ? `perspective(800px) rotateY(${pos.x * 12}deg) rotateX(${-pos.y * 12}deg) scale3d(1.03,1.03,1.03)`
+          : "perspective(800px) rotateY(0deg) rotateX(0deg) scale3d(1,1,1)",
+        transition: over ? "transform 0.15s ease" : "transform 0.6s cubic-bezier(0.16,1,0.3,1)",
+      }}
+    >
+      <div className="tilt-shine" style={{
+        background: over
+          ? `radial-gradient(circle at ${(pos.x + 0.5) * 100}% ${(pos.y + 0.5) * 100}%, rgba(255,255,255,0.08), transparent 60%)`
+          : "none",
+      }} />
+      {children}
+    </motion.div>
+  );
+}
+
+/* ═══════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════ */
+
 const SECTIONS = ["home", "about", "skills", "projects", "experience", "contact"];
 
-const skillCategories = [
-  {
-    name: "Languages",
-    skills: [
-      { name: "Java", icon: FaJava, color: "#f89820" },
-      { name: "C / C++", icon: SiCplusplus, color: "#00599C" },
-      { name: "JavaScript", icon: SiJavascript, color: "#f7df1e" },
-      { name: "TypeScript", icon: SiTypescript, color: "#3178c6" },
-      { name: "SQL", icon: FaDatabase, color: "#336791" },
-      { name: "Rust", icon: SiRust, color: "#ce412b" },
-    ],
-  },
-  {
-    name: "Frameworks",
-    skills: [
-      { name: "Spring Boot", icon: SiSpringboot, color: "#6db33f" },
-      { name: "Hibernate", icon: SiHibernate, color: "#59666c" },
-      { name: "React JS", icon: FaReact, color: "#61dafb" },
-      { name: "Servlets/JSP", icon: FaJava, color: "#e76f00" },
-      { name: "RabbitMQ", icon: SiRabbitmq, color: "#ff6600" },
-      { name: "Apache Kafka", icon: SiApachekafka, color: "#231f20" },
-    ],
-  },
-  {
-    name: "DB & DevOps",
-    skills: [
-      { name: "MySQL", icon: SiMysql, color: "#4479a1" },
-      { name: "PostgreSQL", icon: SiPostgresql, color: "#336791" },
-      { name: "MongoDB", icon: SiMongodb, color: "#4db33d" },
-      { name: "Redis", icon: SiRedis, color: "#dc382d" },
-      { name: "Docker", icon: FaDocker, color: "#2496ed" },
-      { name: "Jenkins", icon: SiJenkins, color: "#d24939" },
-      { name: "Git", icon: FaGitAlt, color: "#f05032" },
-      { name: "Maven", icon: SiApachemaven, color: "#c71a36" },
-      { name: "Grafana", icon: SiGrafana, color: "#f46800" },
-      { name: "Postman", icon: SiPostman, color: "#ff6c37" },
-      { name: "Tomcat", icon: SiApachetomcat, color: "#f8dc75" },
-    ],
-  },
+const allSkills = [
+  { name: "Java", icon: FaJava, color: "#f89820" },
+  { name: "Spring Boot", icon: SiSpringboot, color: "#6db33f" },
+  { name: "C / C++", icon: SiCplusplus, color: "#00599C" },
+  { name: "JavaScript", icon: SiJavascript, color: "#f7df1e" },
+  { name: "TypeScript", icon: SiTypescript, color: "#3178c6" },
+  { name: "React", icon: FaReact, color: "#61dafb" },
+  { name: "Hibernate", icon: SiHibernate, color: "#59666c" },
+  { name: "RabbitMQ", icon: SiRabbitmq, color: "#ff6600" },
+  { name: "Kafka", icon: SiApachekafka, color: "#888" },
+  { name: "MySQL", icon: SiMysql, color: "#4479a1" },
+  { name: "PostgreSQL", icon: SiPostgresql, color: "#336791" },
+  { name: "MongoDB", icon: SiMongodb, color: "#4db33d" },
+  { name: "Redis", icon: SiRedis, color: "#dc382d" },
+  { name: "Docker", icon: FaDocker, color: "#2496ed" },
+  { name: "Jenkins", icon: SiJenkins, color: "#d24939" },
+  { name: "Git", icon: FaGitAlt, color: "#f05032" },
+  { name: "Maven", icon: SiApachemaven, color: "#c71a36" },
+  { name: "Grafana", icon: SiGrafana, color: "#f46800" },
+  { name: "Postman", icon: SiPostman, color: "#ff6c37" },
+  { name: "Tomcat", icon: SiApachetomcat, color: "#f8dc75" },
+  { name: "SQL", icon: FaDatabase, color: "#336791" },
+  { name: "Rust", icon: SiRust, color: "#ce412b" },
 ];
 
 const projects = [
   {
     title: "Railway Booking System",
-    desc: "Full-featured train reservation platform with smart search, PNR tracking, QR-based e-ticketing, dynamic fare calculation, and waitlist auto-promotion. Integrated PayPal, Razorpay & Cashfree payment gateways; jBCrypt password hashing, session-based auth, multi-step OTP recovery via JavaMail SMTP.",
-    tech: ["Java", "Jakarta EE", "JSP", "Servlets", "MongoDB"],
-    gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    desc: "Train reservation platform: smart search, PNR tracking, QR e-ticketing, dynamic fares, waitlist auto-promotion. PayPal + Razorpay + Cashfree; jBCrypt, session auth, OTP recovery via SMTP.",
+    tech: ["Java", "Jakarta EE", "JSP", "MongoDB"],
+    gradient: "linear-gradient(135deg, #667eea, #764ba2)",
     icon: "🚂",
   },
   {
     title: "E-Commerce Microservices",
-    desc: "Distributed backend architecture with independent services (Product, Order, Auth, Payment) communicating via RabbitMQ; Eureka service discovery and Spring Cloud Gateway for intelligent routing. Redis caching cut response times by 45%; Resilience4j circuit breakers for fault tolerance; fully containerized with Docker Compose.",
-    tech: ["Spring Boot", "Docker", "RabbitMQ", "Redis", "Eureka"],
-    gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    desc: "Independent services (Product, Order, Auth, Payment) via RabbitMQ; Eureka discovery & Spring Cloud Gateway. Redis caching → 45% faster; Resilience4j circuit breakers; Docker Compose.",
+    tech: ["Spring Boot", "Docker", "RabbitMQ", "Redis"],
+    gradient: "linear-gradient(135deg, #f093fb, #f5576c)",
     icon: "🛒",
   },
   {
     title: "URL Shortener Service",
-    desc: "High-performance REST API with Base62 encoding, custom aliases, link expiration, and click analytics with geo-tracking. Redis caching achieves sub-10ms redirects; Bucket4j rate limiting, Spring Security API key authentication, and comprehensive OpenAPI/Swagger documentation.",
-    tech: ["Spring Boot", "PostgreSQL", "Redis", "Spring Security"],
-    gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+    desc: "REST API: Base62 encoding, custom aliases, expiration, geo-tracked click analytics. Redis → sub-10ms redirects; Bucket4j rate-limiting; Spring Security + OpenAPI docs.",
+    tech: ["Spring Boot", "PostgreSQL", "Redis"],
+    gradient: "linear-gradient(135deg, #4facfe, #00f2fe)",
     icon: "🔗",
   },
   {
-    title: "Real-Time Chat Application",
-    desc: "Private and group messaging with typing indicators, read receipts, and live online presence via STOMP over WebSocket. JWT authentication with refresh token rotation, MongoDB message persistence, paginated history API, and file/image sharing support.",
-    tech: ["Spring Boot", "WebSocket", "React", "MongoDB", "JWT"],
-    gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+    title: "Real-Time Chat App",
+    desc: "Private & group messaging: typing indicators, read receipts, online presence via STOMP/WebSocket. JWT w/ refresh tokens, MongoDB persistence, file sharing.",
+    tech: ["Spring Boot", "WebSocket", "React", "MongoDB"],
+    gradient: "linear-gradient(135deg, #43e97b, #38f9d7)",
     icon: "💬",
   },
 ];
@@ -182,13 +154,13 @@ const experiences = [
     period: "Jul 2024 — Present",
     location: "Chennai",
     current: true,
-    color: "#6366f1",
+    color: "#818cf8",
     points: [
-      "Built crash dump analysis tool integrated with Zoho Desk API — parses tickets, fetches PDBs, runs WinDbg CLI resolution, reducing triage time by 60%",
-      "Developed Java-based hourly log parser that auto-analyzes tickets, identifies root causes, and posts diagnostics back to Desk",
-      "Created unified JSON framework in C++ using jsoncpp across 10+ agent components; integrated crash analytics into Grafana dashboards",
+      "Built crash dump analysis tool integrated with Zoho Desk API — reducing triage time by 60%",
+      "Java-based hourly log parser: auto-analyzes tickets, posts root-cause diagnostics",
+      "Unified C++ JSON framework (jsoncpp) across 10+ agent components; Grafana dashboards",
     ],
-    tags: ["Java", "C++", "Grafana", "WinDbg", "Zoho Desk API"],
+    tags: ["Java", "C++", "Grafana", "WinDbg"],
   },
   {
     role: "Graduate Trainee",
@@ -197,12 +169,12 @@ const experiences = [
     period: "Oct 2023 — Jul 2024",
     location: "Tenkasi / Chennai",
     current: false,
-    color: "#8b5cf6",
+    color: "#a78bfa",
     points: [
-      "Completed intensive Java, MySQL, Servlets, JSP training at Zoho School of Learning",
-      "Transitioned to incubation program focusing on Windows networking (Active Directory) and C/C++ system-level tools",
+      "Intensive Java, MySQL, Servlets, JSP training at Zoho School",
+      "Incubation: Windows networking (Active Directory) and C/C++ system tools",
     ],
-    tags: ["Java", "MySQL", "C/C++", "Windows Server", "Active Directory"],
+    tags: ["Java", "MySQL", "C/C++", "Windows Server"],
   },
   {
     role: "Programmer Analyst",
@@ -211,12 +183,12 @@ const experiences = [
     period: "Feb 2022 — Oct 2023",
     location: "Remote / Coimbatore",
     current: false,
-    color: "#06b6d4",
+    color: "#22d3ee",
     points: [
-      "Full Stack Java training program with enterprise application development",
-      "MuleSoft API-led connectivity; built POC applications and responsive web interfaces",
+      "Full Stack Java training & enterprise app development",
+      "MuleSoft API-led connectivity; built POC apps & responsive web interfaces",
     ],
-    tags: ["Java", "MuleSoft", "Full Stack", "API Development"],
+    tags: ["Java", "MuleSoft", "Full Stack"],
   },
 ];
 
@@ -227,22 +199,25 @@ const socials = [
   { name: "HackerRank", url: "https://hackerrank.com/profile/msamprakash05", icon: FaHackerrank, color: "#2ec866" },
 ];
 
-const coreConcepts = [
-  "Microservices", "REST APIs", "Design Patterns", "JVM Tuning",
-  "Multithreading", "CI/CD", "JUnit / Mockito", "Agile / Scrum",
-  "JDBC", "Crash Dump Analysis", "System Design", "Data Structures",
-  "STOMP / WebSocket", "Spring Security", "OAuth2 / JWT",
-];
-
-// ================================================================
-// APP
-// ================================================================
+/* ═══════════════════════════════════════
+   MAIN APP
+   ═══════════════════════════════════════ */
 export default function App() {
   const [active, setActive] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mouse, setMouse] = useState({ x: -500, y: -500 });
-  const [skillTab, setSkillTab] = useState(0);
+  const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
+  const [cursorHover, setCursorHover] = useState(false);
   const [expOpen, setExpOpen] = useState(0);
+
+  // Scroll progress
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+
+  // Hero parallax
+  const heroRef = useRef(null);
+  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroY = useTransform(heroProgress, [0, 1], [0, 200]);
+  const heroOpacity = useTransform(heroProgress, [0, 0.8], [1, 0]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -256,7 +231,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const onMouse = (e: MouseEvent) => setMouse({ x: e.clientX, y: e.clientY });
+    const onMouse = (e: MouseEvent) => setCursorPos({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", onMouse, { passive: true });
     return () => window.removeEventListener("mousemove", onMouse);
   }, []);
@@ -266,600 +241,494 @@ export default function App() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  // Setup magnetic hover for interactive elements
+  useEffect(() => {
+    const hoverEls = document.querySelectorAll("a, button, .tilt-card");
+    const enter = () => setCursorHover(true);
+    const leave = () => setCursorHover(false);
+    hoverEls.forEach(el => { el.addEventListener("mouseenter", enter); el.addEventListener("mouseleave", leave); });
+    return () => hoverEls.forEach(el => { el.removeEventListener("mouseenter", enter); el.removeEventListener("mouseleave", leave); });
+  });
+
+  const marqueeSkills = [...allSkills, ...allSkills]; // double for seamless loop
+
   return (
-    <div className="portfolio">
-      {/* ─── Cursor Glow ─── */}
-      <div className="cursor-glow" style={{ left: mouse.x - 200, top: mouse.y - 200 }} />
+    <div className="app">
+      {/* ── Custom Cursor ── */}
+      <motion.div className={`custom-cursor ${cursorHover ? "hover" : ""}`}
+        animate={{ x: cursorPos.x - 10, y: cursorPos.y - 10 }}
+        transition={{ type: "spring", stiffness: 500, damping: 28, mass: 0.5 }}
+      />
+      <motion.div className="cursor-ring"
+        animate={{
+          x: cursorPos.x - (cursorHover ? 30 : 20),
+          y: cursorPos.y - (cursorHover ? 30 : 20),
+          width: cursorHover ? 60 : 40,
+          height: cursorHover ? 60 : 40,
+        }}
+        transition={{ type: "spring", stiffness: 150, damping: 20, mass: 0.8 }}
+      />
 
-      {/* ─── Floating Particles ─── */}
-      <div className="particles-container">
-        {Array.from({ length: 30 }).map((_, i) => (
-          <div key={i} className="particle" style={{
-            width: Math.random() * 3 + 1 + "px",
-            height: Math.random() * 3 + 1 + "px",
-            left: Math.random() * 100 + "%",
-            top: Math.random() * 100 + "%",
-            animationDuration: 12 + Math.random() * 18 + "s",
-            animationDelay: -Math.random() * 15 + "s",
-            opacity: Math.random() * 0.3 + 0.05,
-          }} />
-        ))}
-      </div>
+      {/* ── Scroll Progress ── */}
+      <motion.div className="scroll-progress" style={{ scaleX }} />
 
-      {/* ━━━ NAVIGATION ━━━ */}
+      {/* ━━━━━━━━━━━━━ NAVBAR ━━━━━━━━━━━━━ */}
       <nav className="navbar">
-        <motion.div
-          className="nav-brand"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          onClick={() => scrollTo("home")}
+        <motion.div className="nav-logo" onClick={() => scrollTo("home")}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
         >
-          <span className="brand-bracket">&lt;</span>
-          <span className="brand-name">Sam</span>
-          <span className="brand-slash"> /</span>
-          <span className="brand-bracket">&gt;</span>
+          <span className="logo-dot" />
+          <span>SAM PRAKASH</span>
         </motion.div>
 
-        <div className="nav-links">
+        <div className="nav-pills">
           {SECTIONS.map((s, i) => (
-            <motion.button
-              key={s}
-              className={`nav-link ${active === s ? "active" : ""}`}
+            <motion.button key={s} className={`nav-pill ${active === s ? "active" : ""}`}
               onClick={() => scrollTo(s)}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 + i * 0.05 }}
             >
               {s}
-              {active === s && <motion.div className="nav-indicator" layoutId="nav-indicator" />}
             </motion.button>
           ))}
         </div>
 
-        <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
-          <span className={`menu-bar ${menuOpen ? "open" : ""}`} />
-          <span className={`menu-bar ${menuOpen ? "open" : ""}`} />
-          <span className={`menu-bar ${menuOpen ? "open" : ""}`} />
+        <motion.a href="/Sam_Prakash_Latest_Resume.pdf" target="_blank" rel="noopener noreferrer"
+          className="nav-resume" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+        >
+          <FaDownload size={12} /> Resume
+        </motion.a>
+
+        <button className="burger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+          <span className={menuOpen ? "open" : ""} />
+          <span className={menuOpen ? "open" : ""} />
         </button>
       </nav>
 
-      {/* ─── Mobile Menu ─── */}
+      {/* ── Mobile Menu ── */}
       <AnimatePresence>
         {menuOpen && (
-          <motion.div
-            className="mobile-menu"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <motion.div className="mob-menu" initial={{ clipPath: "circle(0% at 95% 5%)" }}
+            animate={{ clipPath: "circle(150% at 95% 5%)" }} exit={{ clipPath: "circle(0% at 95% 5%)" }}
+            transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
           >
-            {SECTIONS.map((s, i) => (
-              <motion.button
-                key={s}
-                className="mobile-link"
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 30 }}
-                transition={{ delay: i * 0.06 }}
-                onClick={() => { scrollTo(s); setMenuOpen(false); }}
-              >
-                {s}
-              </motion.button>
-            ))}
-            <div className="mobile-socials">
-              {socials.map((s, i) => (
-                <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: s.color }}>
-                  <s.icon size={22} />
-                </a>
+            <div className="mob-inner">
+              {SECTIONS.map((s, i) => (
+                <motion.button key={s} className="mob-link"
+                  initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 + i * 0.06 }}
+                  onClick={() => { scrollTo(s); setMenuOpen(false); }}
+                >
+                  <span className="mob-num">0{i + 1}</span>
+                  <span>{s}</span>
+                </motion.button>
               ))}
+              <motion.div className="mob-socials" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
+                {socials.map((s, i) => (
+                  <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"><s.icon size={20} /></a>
+                ))}
+              </motion.div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ━━━━━━ HERO ━━━━━━ */}
-      <section id="home" className="section hero-section">
-        <div className="container">
-          <div className="hero-layout">
-            <motion.div
-              className="hero-content"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <motion.div
-                className="hero-badge"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
+      {/* ━━━━━━━━━━ HERO ━━━━━━━━━━ */}
+      <section id="home" className="hero" ref={heroRef}>
+        <motion.div className="hero-bg" style={{ y: heroY, opacity: heroOpacity }}>
+          {/* Grid pattern */}
+          <div className="hero-grid-pattern" />
+          <div className="hero-gradient-orb orb-1" />
+          <div className="hero-gradient-orb orb-2" />
+        </motion.div>
+
+        <motion.div className="hero-inner" style={{ y: heroY, opacity: heroOpacity }}>
+          <motion.div className="hero-eyebrow"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
+          >
+            <span className="eyebrow-dot" /> BACKEND ENGINEER — JAVA · SPRING BOOT · C++
+          </motion.div>
+
+          <div className="hero-name-block">
+            {"SAM PRAKASH".split("").map((ch, i) => (
+              <motion.span key={i} className="hero-letter"
+                initial={{ opacity: 0, y: 80, rotateX: -90 }}
+                animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                transition={{ delay: 1 + i * 0.04, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               >
-                <span className="badge-dot" />
-                Available for opportunities
-              </motion.div>
+                {ch === " " ? "\u00A0" : ch}
+              </motion.span>
+            ))}
+          </div>
 
-              <h1 className="hero-heading">
-                Hi, I'm <br />
-                <span className="gradient-text">Sam Prakash</span>
-              </h1>
+          <motion.p className="hero-tagline"
+            initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.6, duration: 0.8 }}
+          >
+            Crafting scalable systems & automation tools<br />
+            at <strong>Zoho</strong> & <strong>Cognizant</strong> — 3+ years
+          </motion.p>
 
-              <div className="hero-type">
-                <Typewriter words={[
-                  "Backend Engineer",
-                  "Java Specialist",
-                  "Spring Boot Developer",
-                  "System-level Programmer",
-                  "Microservices Architect",
-                ]} />
-              </div>
+          <motion.div className="hero-ctas"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.9 }}
+          >
+            <button className="cta-main" onClick={() => scrollTo("projects")}>
+              Explore My Work <FaArrowRight size={14} />
+            </button>
+            <a href="mailto:msamprakash05@gmail.com" className="cta-outline">Say Hello</a>
+          </motion.div>
 
-              <p className="hero-desc">
-                3+ years building crash analysis pipelines, automation tools, and enterprise
-                backend systems at <strong>Zoho</strong> &amp; <strong>Cognizant</strong>.
+          <motion.div className="hero-social-strip"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2 }}
+          >
+            {socials.map((s, i) => (
+              <motion.a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+                className="hero-social" whileHover={{ y: -5, scale: 1.15 }}
+                style={{ color: s.color }}
+              ><s.icon size={20} /></motion.a>
+            ))}
+          </motion.div>
+        </motion.div>
+
+        <motion.div className="scroll-hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }}>
+          <motion.div className="scroll-line" animate={{ scaleY: [0, 1, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <span>SCROLL</span>
+        </motion.div>
+      </section>
+
+      {/* ── Marquee Skills Ribbon ── */}
+      <div className="marquee-section">
+        <div className="marquee-track">
+          <motion.div className="marquee-content" animate={{ x: [0, -50 * allSkills.length] }}
+            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+          >
+            {marqueeSkills.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <span key={i} className="marquee-item">
+                  <Icon size={18} color={s.color} />
+                  <span>{s.name}</span>
+                </span>
+              );
+            })}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* ━━━━━━━━━━ ABOUT — BENTO GRID ━━━━━━━━━━ */}
+      <section id="about" className="sec">
+        <div className="container">
+          <Reveal>
+            <div className="sec-label">
+              <span className="sec-num">01</span>
+              <span className="sec-line" />
+              <span>ABOUT ME</span>
+            </div>
+          </Reveal>
+
+          <div className="bento">
+            <Reveal className="bento-main" delay={0.1}>
+              <h2 className="bento-heading">
+                I build systems<br />that <em>matter</em>.
+              </h2>
+              <p className="bento-text">
+                Backend engineer with 3+ years at <strong>Zoho</strong> &amp; <strong>Cognizant</strong>.
+                Building scalable Java apps, crash analysis pipelines, and system-level C/C++ tools.
+                Currently at ManageEngine Endpoint Central — integrating crash dump analysis with Zoho Desk,
+                building unified JSON frameworks, and Grafana dashboards.
               </p>
+            </Reveal>
 
-              <div className="hero-actions">
-                <button className="btn-glow" onClick={() => scrollTo("projects")}>
-                  View My Work
-                  <FaExternalLinkAlt size={12} style={{ marginLeft: 8 }} />
-                </button>
-                <a href="mailto:msamprakash05@gmail.com" className="btn-glass">
-                  Get In Touch
-                </a>
-                <a
-                  href="/Sam_Prakash_Latest_Resume.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-glass"
-                >
-                  <FaDownload size={13} style={{ marginRight: 8 }} />
-                  Resume
-                </a>
-              </div>
+            {[
+              { n: 3, s: "+", l: "Years of\nExperience", emoji: "💼" },
+              { n: 60, s: "%", l: "Triage Time\nReduced", emoji: "⚡" },
+              { n: 10, s: "+", l: "Agent\nComponents", emoji: "🧩" },
+              { n: 4, s: "+", l: "Full\nProjects", emoji: "🚀" },
+            ].map((d, i) => (
+              <Reveal key={i} className="bento-stat" delay={0.15 + i * 0.08}>
+                <span className="bento-emoji">{d.emoji}</span>
+                <span className="bento-big"><Counter end={d.n} suffix={d.s} /></span>
+                <span className="bento-label">{d.l}</span>
+              </Reveal>
+            ))}
 
-              <div className="hero-socials">
-                {socials.map((s, i) => (
-                  <motion.a
-                    key={i}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="social-icon-btn"
-                    style={{ "--accent": s.color } as React.CSSProperties}
-                    whileHover={{ y: -4, scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + i * 0.08 }}
-                    title={s.name}
-                  >
-                    <s.icon size={18} />
-                  </motion.a>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="hero-visual"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <div className="avatar-container">
-                <div className="avatar-bg-glow" />
-                <div className="orbit-ring">
-                  <div className="orbit-dot" />
-                </div>
-                <div className="orbit-ring orbit-ring-2">
-                  <div className="orbit-dot orbit-dot-2" />
-                </div>
-                <div className="avatar-main">
-                  <span className="avatar-initials">SP</span>
-                </div>
-              </div>
-
-              <div className="floating-badges">
+            <Reveal className="bento-tech" delay={0.3}>
+              <span className="bento-tech-title">CORE STACK</span>
+              <div className="bento-tech-icons">
                 {[
-                  { text: "Java", icon: "☕", pos: "tl" },
-                  { text: "Spring", icon: "🍃", pos: "tr" },
-                  { text: "C++", icon: "⚡", pos: "bl" },
-                  { text: "REST", icon: "🔥", pos: "br" },
-                ].map((b, i) => (
-                  <motion.div
-                    key={i}
-                    className={`floating-badge pos-${b.pos}`}
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
-                  >
-                    <span className="badge-icon">{b.icon}</span>
-                    <span className="badge-label">{b.text}</span>
-                  </motion.div>
-                ))}
+                  { icon: FaJava, color: "#f89820" },
+                  { icon: SiSpringboot, color: "#6db33f" },
+                  { icon: SiCplusplus, color: "#00599C" },
+                  { icon: SiMongodb, color: "#4db33d" },
+                  { icon: SiRedis, color: "#dc382d" },
+                  { icon: FaDocker, color: "#2496ed" },
+                ].map((s, i) => <s.icon key={i} size={24} color={s.color} />)}
               </div>
-            </motion.div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      {/* ━━━━━━ ABOUT ━━━━━━ */}
-      <Section id="about">
-        <div className="section-header">
-          <span className="section-tag">01 / About</span>
-          <h2 className="section-title">
-            Building systems that <span className="gradient-text">matter</span>.
-          </h2>
+      {/* ━━━━━━━━━━ SKILLS ━━━━━━━━━━ */}
+      <section id="skills" className="sec">
+        <div className="container">
+          <Reveal>
+            <div className="sec-label">
+              <span className="sec-num">02</span>
+              <span className="sec-line" />
+              <span>SKILLS & TOOLS</span>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.1}>
+            <h2 className="sec-heading">My <em>toolkit</em>.</h2>
+          </Reveal>
+
+          <div className="skills-hex-grid">
+            {allSkills.map((skill, i) => {
+              const Icon = skill.icon;
+              return (
+                <Reveal key={i} delay={i * 0.03}>
+                  <motion.div className="skill-hex" whileHover={{ scale: 1.1, y: -8 }}
+                    style={{ "--sc": skill.color } as React.CSSProperties}
+                  >
+                    <div className="hex-icon"><Icon size={26} color={skill.color} /></div>
+                    <span className="hex-name">{skill.name}</span>
+                  </motion.div>
+                </Reveal>
+              );
+            })}
+          </div>
+
+          <Reveal delay={0.2}>
+            <div className="concepts-row">
+              {["Microservices", "REST APIs", "Design Patterns", "JVM Tuning", "Multithreading", "CI/CD",
+                "JUnit/Mockito", "Agile", "System Design", "DSA", "WebSocket", "Spring Security", "OAuth2/JWT", "Crash Analysis"
+              ].map((c, i) => (
+                <motion.span key={i} className="concept-chip" whileHover={{ scale: 1.06 }}>{c}</motion.span>
+              ))}
+            </div>
+          </Reveal>
         </div>
+      </section>
 
-        <div className="about-layout">
-          <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }}>
-            <motion.p className="about-para" variants={fadeUp}>
-              Backend engineer with 3+ years at <strong>Zoho Corporation</strong> and <strong>Cognizant</strong>,
-              building scalable Java applications, automating crash analysis pipelines, and developing system-level tools in C/C++.
-            </motion.p>
-            <motion.p className="about-para" variants={fadeUp}>
-              Skilled in Spring Boot, RESTful APIs, and enterprise Java with a strong foundation in debugging,
-              performance optimization, and cross-platform development. Passionate about microservices architecture
-              and building tools that solve real engineering problems.
-            </motion.p>
-            <motion.p className="about-para" variants={fadeUp}>
-              Currently at Zoho's <strong>ManageEngine Endpoint Central</strong> team
-              — building crash dump analysis tools integrated with Zoho Desk API, unified C++ JSON frameworks
-              across 10+ agent components, and crash analytics dashboards with Grafana.
-            </motion.p>
-          </motion.div>
+      {/* ━━━━━━━━━━ PROJECTS ━━━━━━━━━━ */}
+      <section id="projects" className="sec">
+        <div className="container">
+          <Reveal>
+            <div className="sec-label">
+              <span className="sec-num">03</span>
+              <span className="sec-line" />
+              <span>PROJECTS</span>
+            </div>
+          </Reveal>
 
-          <motion.div
-            className="stats-grid"
-            variants={stagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-          >
-            {[
-              { n: 3, s: "+", label: "Years Exp.", icon: "💼" },
-              { n: 60, s: "%", label: "Triage Saved", icon: "⚡" },
-              { n: 10, s: "+", label: "Components", icon: "🧩" },
-              { n: 4, s: "+", label: "Projects", icon: "🚀" },
-            ].map((stat, i) => (
-              <motion.div key={i} className="stat-card" variants={fadeUp} whileHover={{ y: -6, scale: 1.02 }}>
-                <div className="stat-icon">{stat.icon}</div>
-                <div className="stat-number"><Counter end={stat.n} suffix={stat.s} /></div>
-                <div className="stat-label">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </Section>
+          <Reveal delay={0.1}>
+            <h2 className="sec-heading">Things I've <em>built</em>.</h2>
+          </Reveal>
 
-      {/* ━━━━━━ SKILLS ━━━━━━ */}
-      <Section id="skills">
-        <div className="section-header">
-          <span className="section-tag">02 / Skills</span>
-          <h2 className="section-title">
-            My <span className="gradient-text">toolkit</span>.
-          </h2>
-        </div>
-
-        <div className="skill-tab-bar">
-          {skillCategories.map((cat, i) => (
-            <button
-              key={i}
-              className={`skill-tab ${skillTab === i ? "active" : ""}`}
-              onClick={() => setSkillTab(i)}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-
-        <motion.div
-          className="skills-grid"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-          key={skillTab}
-        >
-          {skillCategories[skillTab].skills.map((skill, i) => {
-            const Icon = skill.icon;
-            return (
-              <motion.div
-                key={`${skillTab}-${i}`}
-                className="skill-card"
-                variants={fadeUp}
-                whileHover={{ y: -8, scale: 1.04 }}
-                style={{ "--skill-color": skill.color } as React.CSSProperties}
-              >
-                <div className="skill-icon-wrap">
-                  <Icon size={28} color={skill.color} />
-                </div>
-                <span className="skill-name">{skill.name}</span>
-                <div className="skill-glow" />
-              </motion.div>
-            );
-          })}
-        </motion.div>
-
-        <motion.div
-          className="concepts-section"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-        >
-          <span className="concepts-label">CORE CONCEPTS</span>
-          <div className="concepts-wrap">
-            {coreConcepts.map((c, i) => (
-              <motion.span
-                key={i}
-                className="concept-pill"
-                whileHover={{ scale: 1.05, y: -2 }}
-              >
-                {c}
-              </motion.span>
+          <div className="proj-grid">
+            {projects.map((p, i) => (
+              <Reveal key={i} delay={i * 0.1}>
+                <TiltCard className="proj-card">
+                  <div className="proj-top" style={{ background: p.gradient }}>
+                    <span className="proj-idx">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="proj-icon">{p.icon}</span>
+                  </div>
+                  <div className="proj-bottom">
+                    <h3 className="proj-title">{p.title}</h3>
+                    <p className="proj-desc">{p.desc}</p>
+                    <div className="proj-tags">
+                      {p.tech.map((t, j) => <span key={j} className="proj-tag">{t}</span>)}
+                    </div>
+                  </div>
+                </TiltCard>
+              </Reveal>
             ))}
           </div>
-        </motion.div>
-      </Section>
-
-      {/* ━━━━━━ PROJECTS ━━━━━━ */}
-      <Section id="projects">
-        <div className="section-header">
-          <span className="section-tag">03 / Projects</span>
-          <h2 className="section-title">
-            Things I've <span className="gradient-text">built</span>.
-          </h2>
         </div>
+      </section>
 
-        <motion.div
-          className="projects-grid"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-        >
-          {projects.map((p, i) => (
-            <motion.div
-              key={i}
-              className="project-card"
-              variants={fadeUp}
-              whileHover={{ y: -10 }}
-            >
-              <div className="project-cover" style={{ background: p.gradient }}>
-                <span className="project-num">{String(i + 1).padStart(2, "0")}</span>
-                <span className="project-emoji">{p.icon}</span>
-              </div>
-              <div className="project-body">
-                <h3 className="project-title">{p.title}</h3>
-                <p className="project-desc">{p.desc}</p>
-                <div className="project-tech">
-                  {p.tech.map((t, j) => (
-                    <span key={j} className="tech-chip">{t}</span>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </Section>
+      {/* ━━━━━━━━━━ EXPERIENCE ━━━━━━━━━━ */}
+      <section id="experience" className="sec">
+        <div className="container">
+          <Reveal>
+            <div className="sec-label">
+              <span className="sec-num">04</span>
+              <span className="sec-line" />
+              <span>EXPERIENCE</span>
+            </div>
+          </Reveal>
 
-      {/* ━━━━━━ EXPERIENCE ━━━━━━ */}
-      <Section id="experience">
-        <div className="section-header">
-          <span className="section-tag">04 / Experience</span>
-          <h2 className="section-title">
-            Where I've <span className="gradient-text">worked</span>.
-          </h2>
-        </div>
+          <Reveal delay={0.1}>
+            <h2 className="sec-heading">Where I've <em>worked</em>.</h2>
+          </Reveal>
 
-        <div className="timeline">
-          {experiences.map((exp, i) => (
-            <motion.div
-              key={i}
-              className="timeline-item"
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.12 }}
-            >
-              <div className={`timeline-dot ${exp.current ? "current" : ""}`} />
-              <div
-                className="timeline-card"
-                style={{ borderLeftColor: exp.color }}
-                onClick={() => setExpOpen(expOpen === i ? -1 : i)}
-              >
-                <div className="timeline-top">
-                  <div>
-                    <h3 className="exp-role">{exp.role}</h3>
-                    <p className="exp-company" style={{ color: exp.color }}>{exp.company}</p>
-                    {exp.team && <p className="exp-team">{exp.team}</p>}
-                  </div>
-                  <div className="exp-meta">
-                    <span className="exp-period">{exp.period}</span>
-                    <span className="exp-location"><FaMapMarkerAlt size={10} /> {exp.location}</span>
-                  </div>
-                </div>
-
-                <AnimatePresence>
-                  {expOpen === i && (
-                    <motion.div
-                      className="exp-details"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.35 }}
-                    >
-                      <ul className="exp-points">
-                        {exp.points.map((pt, j) => (
-                          <li key={j}>{pt}</li>
-                        ))}
-                      </ul>
-                      <div className="exp-tags">
-                        {exp.tags.map((t, j) => <span key={j} className="concept-pill small">{t}</span>)}
+          <div className="exp-list">
+            {experiences.map((exp, i) => (
+              <Reveal key={i} delay={i * 0.1}>
+                <motion.div className={`exp-row ${expOpen === i ? "open" : ""}`}
+                  onClick={() => setExpOpen(expOpen === i ? -1 : i)}
+                  layout
+                >
+                  <div className="exp-top-row">
+                    <div className="exp-left">
+                      <div className="exp-indicator" style={{ background: exp.color }} />
+                      <div>
+                        <h3 className="exp-role">{exp.role}</h3>
+                        <p className="exp-co" style={{ color: exp.color }}>{exp.company}</p>
+                        {exp.team && <p className="exp-team">{exp.team}</p>}
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </div>
+                    <div className="exp-right">
+                      <span className="exp-date">{exp.period}</span>
+                      <span className="exp-loc"><FaMapMarkerAlt size={10} /> {exp.location}</span>
+                    </div>
+                    <span className="exp-arrow">{expOpen === i ? <FaChevronUp /> : <FaChevronDown />}</span>
+                  </div>
 
-                <button className="exp-toggle">
-                  {expOpen === i ? <><FaChevronUp size={10} /> collapse</> : <><FaChevronDown size={10} /> expand</>}
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Education & Achievements */}
-        <motion.div
-          className="info-cards"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-        >
-          <motion.div className="info-card" variants={fadeUp}>
-            <h3 className="info-card-title">🎓 Education</h3>
-            <div className="info-item">
-              <strong>BE in Mechatronics Engineering</strong>
-              <span>Thiagarajar College of Engineering — Madurai</span>
-              <span className="info-date">2018 – 2022</span>
-            </div>
-            <div className="info-item">
-              <strong>HSC (Higher Secondary)</strong>
-              <span>Amir Jamal HSS — Tirunelveli</span>
-              <span className="info-date">2017 – 2018</span>
-              <span className="info-highlight">200/200 in Mathematics 🏅</span>
-            </div>
-          </motion.div>
-
-          <motion.div className="info-card" variants={fadeUp}>
-            <h3 className="info-card-title">🏆 Achievements</h3>
-            <div className="achievement-item">
-              <span className="achievement-badge gold">200/200</span>
-              <span>Mathematics — 12th HSC Board Exam</span>
-            </div>
-            <div className="achievement-item">
-              <span className="achievement-badge gold">100/100</span>
-              <span>Mathematics — 10th SSLC Board Exam</span>
-            </div>
-          </motion.div>
-
-          <motion.div className="info-card" variants={fadeUp}>
-            <h3 className="info-card-title">📜 Certifications</h3>
-            {[
-              "Java SE — HackerRank",
-              "Spring Boot — Udemy",
-              "Problem Solving — HackerRank",
-              "SQL — HackerRank",
-            ].map((c, i) => (
-              <div key={i} className="cert-item">
-                <div className="cert-dot" />
-                <span>{c}</span>
-              </div>
-            ))}
-          </motion.div>
-
-          <motion.div className="info-card" variants={fadeUp}>
-            <h3 className="info-card-title">🔗 Coding Profiles</h3>
-            {[
-              { name: "LeetCode", user: "Sam_Prakash", url: "https://leetcode.com/u/Sam_Prakash/", color: "#ffa116", icon: SiLeetcode },
-              { name: "HackerRank", user: "msamprakash05", url: "https://hackerrank.com/profile/msamprakash05", color: "#2ec866", icon: FaHackerrank },
-              { name: "GitHub", user: "Sam-Prakash-M", url: "https://github.com/Sam-Prakash-M", color: "#e6edf3", icon: FaGithub },
-            ].map((p, i) => (
-              <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" className="profile-link" style={{ "--link-color": p.color } as React.CSSProperties}>
-                <p.icon size={16} color={p.color} />
-                <span>{p.name}</span>
-                <span className="profile-user">@{p.user}</span>
-              </a>
-            ))}
-          </motion.div>
-        </motion.div>
-      </Section>
-
-      {/* ━━━━━━ CONTACT ━━━━━━ */}
-      <Section id="contact" className="contact-section">
-        <div className="section-header center">
-          <span className="section-tag">05 / Contact</span>
-          <h2 className="section-title">
-            Let's <span className="gradient-text">connect</span>.
-          </h2>
-          <p className="section-subtitle">
-            Open to Java backend roles, engineering challenges, or collaboration opportunities.
-            Let's build something great together.
-          </p>
-        </div>
-
-        <motion.div
-          className="contact-card"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <div className="contact-info-grid">
-            <div className="contact-info-item">
-              <FaEnvelope className="contact-icon" />
-              <span className="contact-label">Email</span>
-              <a href="mailto:msamprakash05@gmail.com" className="contact-value link">
-                msamprakash05@gmail.com
-              </a>
-            </div>
-            <div className="contact-info-item">
-              <FaPhone className="contact-icon" />
-              <span className="contact-label">Phone</span>
-              <span className="contact-value">+91 6385812669</span>
-            </div>
-            <div className="contact-info-item">
-              <FaMapMarkerAlt className="contact-icon" />
-              <span className="contact-label">Location</span>
-              <span className="contact-value">Chennai, India</span>
-            </div>
-          </div>
-
-          <div className="contact-socials">
-            {socials.map((s, i) => (
-              <motion.a
-                key={i}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="contact-social-btn"
-                style={{ "--btn-color": s.color } as React.CSSProperties}
-                whileHover={{ y: -4, scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <s.icon size={18} />
-                <span>{s.name}</span>
-              </motion.a>
+                  <AnimatePresence>
+                    {expOpen === i && (
+                      <motion.div className="exp-body" initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.35 }}
+                      >
+                        <ul className="exp-bullets">
+                          {exp.points.map((pt, j) => <li key={j}>{pt}</li>)}
+                        </ul>
+                        <div className="exp-chips">
+                          {exp.tags.map((t, j) => <span key={j} className="concept-chip sm">{t}</span>)}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </Reveal>
             ))}
           </div>
-        </motion.div>
 
-        <motion.div
-          className="cta-wrap"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-        >
-          <a href="mailto:msamprakash05@gmail.com" className="btn-glow large">
-            <FaEnvelope style={{ marginRight: 10 }} /> Send Me an Email
-          </a>
-        </motion.div>
-      </Section>
+          {/* Edu / Achievements / Certs */}
+          <div className="info-bento">
+            <Reveal className="info-block" delay={0.1}>
+              <h3 className="info-heading">🎓 Education</h3>
+              <div className="info-entry">
+                <strong>BE Mechatronics Engineering</strong>
+                <span>Thiagarajar College of Engineering, Madurai · 2018–2022</span>
+              </div>
+              <div className="info-entry">
+                <strong>HSC — Amir Jamal HSS, Tirunelveli</strong>
+                <span>2017–2018 · <em className="gold">200/200 Mathematics 🏅</em></span>
+              </div>
+            </Reveal>
 
-      {/* ━━━ Footer ━━━ */}
+            <Reveal className="info-block" delay={0.15}>
+              <h3 className="info-heading">🏆 Achievements</h3>
+              <div className="achiev-row"><span className="achiev-badge">200/200</span> Maths — 12th HSC</div>
+              <div className="achiev-row"><span className="achiev-badge">100/100</span> Maths — 10th SSLC</div>
+            </Reveal>
+
+            <Reveal className="info-block" delay={0.2}>
+              <h3 className="info-heading">📜 Certifications</h3>
+              {["Java SE — HackerRank", "Spring Boot — Udemy", "Problem Solving — HackerRank", "SQL — HackerRank"].map((c, i) => (
+                <div key={i} className="cert-row"><span className="cert-bullet" />{c}</div>
+              ))}
+            </Reveal>
+
+            <Reveal className="info-block" delay={0.25}>
+              <h3 className="info-heading">🔗 Profiles</h3>
+              {[
+                { name: "LeetCode", user: "Sam_Prakash", url: "https://leetcode.com/u/Sam_Prakash/", icon: SiLeetcode, color: "#ffa116" },
+                { name: "HackerRank", user: "msamprakash05", url: "https://hackerrank.com/profile/msamprakash05", icon: FaHackerrank, color: "#2ec866" },
+                { name: "GitHub", user: "Sam-Prakash-M", url: "https://github.com/Sam-Prakash-M", icon: FaGithub, color: "#e6edf3" },
+              ].map((p, i) => (
+                <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" className="profile-row">
+                  <p.icon size={16} color={p.color} />
+                  <span>{p.name}</span>
+                  <span className="profile-handle">@{p.user}</span>
+                </a>
+              ))}
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ━━━━━━━━━━ CONTACT ━━━━━━━━━━ */}
+      <section id="contact" className="sec contact-sec">
+        <div className="container">
+          <Reveal>
+            <div className="sec-label center">
+              <span className="sec-num">05</span>
+              <span className="sec-line" />
+              <span>CONTACT</span>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.1}>
+            <h2 className="contact-big-text">
+              Let's work<br /><em>together</em>.
+            </h2>
+          </Reveal>
+
+          <Reveal delay={0.15}>
+            <p className="contact-sub">
+              Open to Java backend roles, engineering challenges, or collaborations.
+            </p>
+          </Reveal>
+
+          <Reveal delay={0.2}>
+            <div className="contact-grid">
+              <a href="mailto:msamprakash05@gmail.com" className="contact-block">
+                <FaEnvelope size={22} />
+                <span className="contact-block-label">EMAIL</span>
+                <span className="contact-block-value">msamprakash05@gmail.com</span>
+              </a>
+              <div className="contact-block">
+                <FaPhone size={22} />
+                <span className="contact-block-label">PHONE</span>
+                <span className="contact-block-value">+91 6385812669</span>
+              </div>
+              <div className="contact-block">
+                <FaMapMarkerAlt size={22} />
+                <span className="contact-block-label">LOCATION</span>
+                <span className="contact-block-value">Chennai, India</span>
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.25}>
+            <div className="contact-socials">
+              {socials.map((s, i) => (
+                <motion.a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+                  className="contact-social" whileHover={{ y: -6, scale: 1.08 }}
+                  style={{ "--soc": s.color } as React.CSSProperties}
+                >
+                  <s.icon size={20} />
+                  <span>{s.name}</span>
+                </motion.a>
+              ))}
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.3}>
+            <a href="mailto:msamprakash05@gmail.com" className="cta-main big">
+              <FaEnvelope /> Send Me a Message <FaArrowRight />
+            </a>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
       <footer className="footer">
-        <div className="footer-inner">
-          <span className="footer-brand">
-            <span className="brand-bracket">&lt;</span>
-            <span className="brand-name">Sam</span>
-            <span className="brand-slash"> /</span>
-            <span className="brand-bracket">&gt;</span>
-          </span>
-          <p className="footer-text">© 2026 Sam Prakash M — Built with ❤️ and Java</p>
-          <div className="footer-links">
+        <div className="container footer-grid">
+          <div className="footer-brand">
+            <span className="logo-dot" />
+            <span>SAM PRAKASH</span>
+          </div>
+          <p className="footer-copy">© 2026 · Built with ❤️ and Java</p>
+          <div className="footer-socials">
             {socials.map((s, i) => (
-              <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" className="footer-social" title={s.name}>
-                <s.icon size={16} />
-              </a>
+              <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"><s.icon size={16} /></a>
             ))}
           </div>
         </div>
