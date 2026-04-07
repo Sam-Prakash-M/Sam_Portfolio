@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import {
   motion, useScroll, useTransform, useSpring, useInView,
-  useMotionValue, useAnimationFrame, AnimatePresence, animate,
+  useMotionValue, AnimatePresence, animate,
 } from "framer-motion";
 import Lenis from "lenis";
 import {
@@ -137,85 +137,11 @@ function Magnetic({ children, strength = 0.3 }: { children: ReactNode; strength?
   );
 }
 
-/* ═══════════════════════════════════════
-   VELOCITY MARQUEE
-   ═══════════════════════════════════════ */
-function VelocityMarquee({ children, baseSpeed = 1 }: { children: ReactNode; baseSpeed?: number }) {
-  const baseX = useMotionValue(0);
-  const { scrollY } = useScroll();
-  const scrollVelocity = useMotionValue(0);
-  const prev = useRef(0);
-  const dir = useRef(1);
-
-  useAnimationFrame((_t, delta) => {
-    const sv = scrollY.get();
-    const diff = sv - prev.current;
-    prev.current = sv;
-    scrollVelocity.set(diff);
-    if (diff > 0) dir.current = -1;
-    else if (diff < 0) dir.current = 1;
-    const speed = baseSpeed + Math.min(Math.abs(diff) * 0.08, 6);
-    let next = baseX.get() + dir.current * speed * (delta / 16);
-    if (next <= -50) next += 50;
-    if (next >= 0) next -= 50;
-    baseX.set(next);
-  });
-
-  const xPct = useTransform(baseX, (v) => `${v}%`);
-  return (
-    <div className="marquee-wrap">
-      <motion.div className="marquee-inner" style={{ x: xPct }}>
-        {children}{children}{children}{children}
-      </motion.div>
-    </div>
-  );
-}
 
 /* ═══════════════════════════════════════
-   HORIZONTAL SCROLL PROJECTS (desktop)
+   PROJECTS SECTION — responsive grid
    ═══════════════════════════════════════ */
-function HorizontalProjects() {
-  const outerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: outerRef, offset: ["start start", "end end"] });
-  const x = useTransform(scrollYProgress, [0, 1], ["2%", `-${(projects.length - 1) * 52}%`]);
-
-  return (
-    <div id="projects" className="hscroll-outer" ref={outerRef}>
-      <div className="hscroll-sticky">
-        <div className="hscroll-header">
-          <Reveal>
-            <span className="sec-label"><span className="sec-num">03</span><span className="sec-line" /> PROJECTS</span>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <h2 className="sec-heading"><TextReveal>Things I've built.</TextReveal></h2>
-          </Reveal>
-        </div>
-        <motion.div className="hscroll-track" style={{ x }}>
-          {projects.map((p, i) => (
-            <motion.div key={i} className="proj-card" whileHover={{ y: -10 }}>
-              <div className="proj-visual" style={{ background: p.gradient }}>
-                <span className="proj-idx">0{i + 1}</span>
-                <span className="proj-emoji">{p.icon}</span>
-              </div>
-              <div className="proj-info">
-                <h3 className="proj-title">{p.title}</h3>
-                <p className="proj-desc">{p.desc}</p>
-                <div className="proj-tags">
-                  {p.tech.map((t, j) => <span key={j} className="chip sm">{t}</span>)}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════
-   MOBILE PROJECTS (vertical fallback)
-   ═══════════════════════════════════════ */
-function MobileProjects() {
+function ProjectsSection() {
   return (
     <section id="projects" className="sec">
       <div className="container">
@@ -225,10 +151,13 @@ function MobileProjects() {
         <Reveal delay={0.1}>
           <h2 className="sec-heading"><TextReveal>Things I've built.</TextReveal></h2>
         </Reveal>
-        <div className="proj-grid-mobile">
+        <div className="proj-grid">
           {projects.map((p, i) => (
-            <Reveal key={i} delay={i * 0.1}>
-              <div className="proj-card mobile">
+            <Reveal key={i} delay={i * 0.12}>
+              <motion.div className="proj-card"
+                whileHover={{ y: -8, scale: 1.015 }}
+                transition={{ type: "spring", stiffness: 300, damping: 22 }}
+              >
                 <div className="proj-visual" style={{ background: p.gradient }}>
                   <span className="proj-idx">0{i + 1}</span>
                   <span className="proj-emoji">{p.icon}</span>
@@ -240,7 +169,7 @@ function MobileProjects() {
                     {p.tech.map((t, j) => <span key={j} className="chip sm">{t}</span>)}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </Reveal>
           ))}
         </div>
@@ -350,21 +279,6 @@ export default function App() {
 
   const onPreloaderDone = useCallback(() => setLoaded(true), []);
 
-  // Skill marquee items
-  const marqueeItems = (
-    <>
-      {skills.map((s, i) => {
-        const Icon = s.icon;
-        return (
-          <span key={i} className="mq-item">
-            <Icon size={18} color={s.color} />
-            <span>{s.name}</span>
-            <span className="mq-dot">·</span>
-          </span>
-        );
-      })}
-    </>
-  );
 
   return (
     <>
@@ -438,6 +352,17 @@ export default function App() {
                     <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: s.color }}><s.icon size={22} /></a>
                   ))}
                 </motion.div>
+                <motion.a
+                  href="/Sam_Prakash_Latest_Resume.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mob-resume"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <FaDownload size={14} /> Download Resume
+                </motion.a>
               </motion.div>
             )}
           </AnimatePresence>
@@ -460,6 +385,7 @@ export default function App() {
               </motion.div>
 
               <h1 className="hero-name">
+                <span className="hero-name-line">
                 {"SAM".split("").map((ch, i) => (
                   <motion.span key={`a${i}`} className="hero-char"
                     initial={{ opacity: 0, y: 100, rotateX: -80 }}
@@ -467,7 +393,9 @@ export default function App() {
                     transition={{ delay: 0.6 + i * 0.06, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                   >{ch}</motion.span>
                 ))}
+                </span>
                 <br />
+                <span className="hero-name-line">
                 {"PRAKASH".split("").map((ch, i) => (
                   <motion.span key={`b${i}`} className="hero-char outline"
                     initial={{ opacity: 0, y: 100, rotateX: -80 }}
@@ -475,6 +403,7 @@ export default function App() {
                     transition={{ delay: 0.85 + i * 0.05, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                   >{ch}</motion.span>
                 ))}
+                </span>
               </h1>
 
               <motion.p className="hero-sub"
@@ -521,10 +450,6 @@ export default function App() {
             </motion.div>
           </section>
 
-          {/* ─── MARQUEE ─── */}
-          <div className="marquee-section">
-            <VelocityMarquee baseSpeed={1.5}>{marqueeItems}</VelocityMarquee>
-          </div>
 
           {/* ━━━━━ ABOUT ━━━━━ */}
           <section id="about" className="sec">
@@ -611,8 +536,8 @@ export default function App() {
             </div>
           </section>
 
-          {/* ━━━━━ PROJECTS (horizontal on desktop, vertical on mobile) ━━━━━ */}
-          {isMobile ? <MobileProjects /> : <HorizontalProjects />}
+          {/* ━━━━━ PROJECTS ━━━━━ */}
+          <ProjectsSection />
 
           {/* ━━━━━ EXPERIENCE ━━━━━ */}
           <section id="experience" className="sec">
