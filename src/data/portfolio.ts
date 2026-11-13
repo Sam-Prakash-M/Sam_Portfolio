@@ -17,7 +17,7 @@ export interface Experience {
 export interface Social { name: string; handle: string; url: string; icon: IconType }
 
 export const RESUME_URL = "/Sam_Prakash_Latest_Resume.pdf";
-export const EMAIL = "msamprakash05@gmail.com";
+export const EMAIL = "samprakashmjk@gmail.com";
 export const PHONE = "+91 6385812669";
 export const LOCATION = "Chennai, India";
 
@@ -165,7 +165,7 @@ export const socials: Social[] = [
   { name: "LinkedIn", handle: "msamprakash", url: "https://linkedin.com/in/msamprakash", icon: FaLinkedinIn },
   { name: "GitHub", handle: "Sam-Prakash-M", url: "https://github.com/Sam-Prakash-M", icon: FaGithub },
   { name: "LeetCode", handle: "Sam_Prakash", url: "https://leetcode.com/u/Sam_Prakash/", icon: SiLeetcode },
-  { name: "HackerRank", handle: "msamprakash05", url: "https://hackerrank.com/profile/msamprakash05", icon: FaHackerrank },
+  { name: "HackerRank", handle: "Sam_Prakash_M", url: "https://hackerrank.com/profile/Sam_Prakash_M", icon: FaHackerrank },
 ];
 
 export const stats = [
