@@ -1,693 +1,433 @@
-import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useRef, useCallback, type ReactNode, type MouseEvent } from "react";
 import {
-  motion, useScroll, useTransform, useSpring, useInView,
-  useMotionValue, AnimatePresence, animate,
+  motion, useScroll, useSpring, useInView, AnimatePresence, animate,
+  MotionConfig, useReducedMotion,
 } from "framer-motion";
 import Lenis from "lenis";
 import {
-  FaEnvelope, FaPhone, FaMapMarkerAlt, FaDownload,
-  FaArrowRight, FaChevronDown, FaChevronUp, FaArrowDown,
-} from "react-icons/fa";
+  FiArrowUpRight, FiDownload, FiMail, FiPhone, FiMapPin, FiMenu, FiX, FiAward, FiBookOpen,
+} from "react-icons/fi";
 import {
-  skills, projects, experiences, socials, stats, concepts, SECTIONS,
+  skillGroups, projects, experiences, socials, stats, marquee, education, achievements,
+  certifications, SECTIONS, RESUME_URL, EMAIL, PHONE, LOCATION,
 } from "./data/portfolio";
 import "./App.css";
 
-/* ═══════════════════════════════════════
-   PRELOADER
-   ═══════════════════════════════════════ */
-function Preloader({ onDone }: { onDone: () => void }) {
-  const [pct, setPct] = useState(0);
-  useEffect(() => {
-    let n = 0;
-    const iv = setInterval(() => {
-      n += Math.random() * 12 + 3;
-      if (n >= 100) { n = 100; clearInterval(iv); setTimeout(onDone, 600); }
-      setPct(Math.min(n, 100));
-    }, 80);
-    return () => clearInterval(iv);
-  }, [onDone]);
-  return (
-    <motion.div className="preloader" exit={{ opacity: 0 }} transition={{ duration: 0.6 }}>
-      <div className="pre-inner">
-        <motion.div className="pre-name">
-          {"SAM".split("").map((ch, i) => (
-            <motion.span key={i}
-              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 + i * 0.08, duration: 0.6 }}
-            >{ch}</motion.span>
-          ))}
-        </motion.div>
-        <motion.p className="pre-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
-          PORTFOLIO
-        </motion.p>
-        <div className="pre-bar-track">
-          <div className="pre-bar-fill" style={{ width: `${pct}%` }} />
-        </div>
-        <span className="pre-count">{Math.floor(pct)}%</span>
-      </div>
-    </motion.div>
-  );
-}
+const EASE = [0.16, 1, 0.3, 1] as const;
 
-/* ═══════════════════════════════════════
-   CUSTOM CURSOR
-   ═══════════════════════════════════════ */
-function CustomCursor() {
-  const dotX = useMotionValue(-100);
-  const dotY = useMotionValue(-100);
-  const ringX = useSpring(dotX, { stiffness: 200, damping: 25 });
-  const ringY = useSpring(dotY, { stiffness: 200, damping: 25 });
-  const [hov, setHov] = useState(false);
-  const [proj, setProj] = useState(false);
-
-  useEffect(() => {
-    const move = (e: MouseEvent) => { dotX.set(e.clientX); dotY.set(e.clientY); };
-    const over = (e: MouseEvent) => {
-      const t = e.target as HTMLElement;
-      const link = t.closest("a, button, .skill-hex, .stat-card, .exp-row, .c-block, .profile-link, .chip, .hero-soc, .c-soc, .nav-link, .nav-resume, .nav-logo, .burger");
-      const project = t.closest(".proj-card");
-      setHov(!!link || !!project);
-      setProj(!!project);
-    };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseover", over);
-    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseover", over); };
-  }, [dotX, dotY]);
-
-  const size = hov ? 60 : 36;
-  return (
-    <>
-      <motion.div className={`cur-dot ${hov ? "hov" : ""}`}
-        style={{ x: dotX, y: dotY, translateX: "-50%", translateY: "-50%" }}
-      />
-      <motion.div className={`cur-ring ${hov ? "hov" : ""} ${proj ? "proj" : ""}`}
-        style={{ x: ringX, y: ringY, width: size, height: size, translateX: "-50%", translateY: "-50%" }}
-      >
-        {proj && <span className="cur-label">VIEW</span>}
-      </motion.div>
-    </>
-  );
-}
-
-/* ═══════════════════════════════════════
-   TEXT REVEAL (word-by-word clip)
-   ═══════════════════════════════════════ */
-function TextReveal({ children, delay = 0, className = "" }: {
-  children: string; delay?: number; className?: string;
+/* Fade-up on scroll into view */
+function Reveal({ children, delay = 0, className = "" }: {
+  children: ReactNode; delay?: number; className?: string;
 }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
-  const words = children.split(" ");
-  return (
-    <span ref={ref} className={`tr-wrap ${className}`}>
-      {words.map((w, i) => (
-        <span key={i} className="tr-clip" style={{ marginRight: "0.3em" }}>
-          <motion.span className="tr-word"
-            initial={{ y: "105%" }}
-            animate={inView ? { y: 0 } : { y: "105%" }}
-            transition={{ delay: delay + i * 0.06, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          >{w}</motion.span>
-        </span>
-      ))}
-    </span>
-  );
-}
-
-/* ═══════════════════════════════════════
-   MAGNETIC HOVER
-   ═══════════════════════════════════════ */
-function Magnetic({ children, strength = 0.3 }: { children: ReactNode; strength?: number }) {
   const ref = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const sx = useSpring(x, { stiffness: 250, damping: 20 });
-  const sy = useSpring(y, { stiffness: 250, damping: 20 });
-  const onMove = (e: React.MouseEvent) => {
-    if (!ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    x.set((e.clientX - r.left - r.width / 2) * strength);
-    y.set((e.clientY - r.top - r.height / 2) * strength);
-  };
-  const onLeave = () => { x.set(0); y.set(0); };
-  return (
-    <motion.div ref={ref} style={{ x: sx, y: sy, display: "inline-block" }}
-      onMouseMove={onMove} onMouseLeave={onLeave}
-    >{children}</motion.div>
-  );
-}
-
-
-/* ═══════════════════════════════════════
-   PROJECTS SECTION — responsive grid
-   ═══════════════════════════════════════ */
-function ProjectsSection() {
-  return (
-    <section id="projects" className="sec">
-      <div className="container">
-        <Reveal>
-          <span className="sec-label"><span className="sec-num">03</span><span className="sec-line" /> PROJECTS</span>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <h2 className="sec-heading"><TextReveal>Things I've built.</TextReveal></h2>
-        </Reveal>
-        <div className="proj-grid">
-          {projects.map((p, i) => (
-            <Reveal key={i} delay={i * 0.12}>
-              <motion.div className="proj-card"
-                whileHover={{ y: -8, scale: 1.015 }}
-                transition={{ type: "spring", stiffness: 300, damping: 22 }}
-              >
-                <div className="proj-visual" style={{ background: p.gradient }}>
-                  <span className="proj-idx">0{i + 1}</span>
-                  <span className="proj-emoji">{p.icon}</span>
-                </div>
-                <div className="proj-info">
-                  <h3 className="proj-title">{p.title}</h3>
-                  <p className="proj-desc">{p.desc}</p>
-                  <div className="proj-tags">
-                    {p.tech.map((t, j) => <span key={j} className="chip sm">{t}</span>)}
-                  </div>
-                </div>
-              </motion.div>
-            </Reveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ═══════════════════════════════════════
-   UTILITIES
-   ═══════════════════════════════════════ */
-
-
-// Reveal on scroll
-function Reveal({ children, delay = 0, className = "", direction = "up", y }: {
-  children: ReactNode; delay?: number; className?: string; direction?: "up" | "left" | "right"; y?: number;
-}) {
-  const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
-  const dirs = { up: { y: y ?? 60 }, left: { x: -60 }, right: { x: 60 } };
   return (
     <motion.div ref={ref} className={className}
-      initial={{ opacity: 0, ...dirs[direction] }}
-      animate={inView ? { opacity: 1, x: 0, y: 0 } : {}}
-      transition={{ duration: 0.85, delay, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: 28 }}
+      animate={inView ? { opacity: 1, y: 0 } : undefined}
+      transition={{ duration: 0.7, delay, ease: EASE }}
     >{children}</motion.div>
   );
 }
 
-// Animated counter
+/* Card with a pointer-following spotlight (position fed to CSS variables) */
+function Card({ children, className = "", delay = 0 }: {
+  children: ReactNode; className?: string; delay?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const onMove = (e: MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
+  return (
+    <motion.div ref={ref} className={`card ${className}`} onMouseMove={onMove}
+      initial={{ opacity: 0, y: 28 }}
+      animate={inView ? { opacity: 1, y: 0 } : undefined}
+      transition={{ duration: 0.7, delay, ease: EASE }}
+    >{children}</motion.div>
+  );
+}
+
 function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
-  const [c, setC] = useState(0);
-  const ref = useRef(null);
+  const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
+  const reduce = useReducedMotion();
+  const [value, setValue] = useState(0);
   useEffect(() => {
     if (!inView) return;
     const ctrl = animate(0, end, {
-      duration: 1.5, ease: [0.16, 1, 0.3, 1],
-      onUpdate: (v) => setC(Math.floor(v)),
+      duration: reduce ? 0 : 1.4, ease: EASE,
+      onUpdate: (v) => setValue(Math.round(v)),
     });
     return () => ctrl.stop();
-  }, [inView, end]);
-  return <span ref={ref}>{c}{suffix}</span>;
+  }, [inView, end, reduce]);
+  return <span ref={ref}>{value}{suffix}</span>;
 }
 
+function SectionHead({ num, label, children }: { num: string; label: string; children: ReactNode }) {
+  return (
+    <Reveal className="sec-head">
+      <span className="sec-label"><span className="sec-num">{num}</span>{label}</span>
+      <h2 className="sec-title">{children}</h2>
+    </Reveal>
+  );
+}
 
-
-/* ═══════════════════════════════════════
-   MAIN APP
-   ═══════════════════════════════════════ */
 export default function App() {
-  const [loaded, setLoaded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [active, setActive] = useState("home");
-  const [expOpen, setExpOpen] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+  const lenisRef = useRef<Lenis | null>(null);
+  const reduce = useReducedMotion();
 
-  // Scroll progress
   const { scrollYProgress } = useScroll();
-  const progressX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
 
-  // Hero parallax
-  const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroScale = useTransform(heroScroll, [0, 1], [1, 0.8]);
-  const heroOpacity = useTransform(heroScroll, [0, 0.7], [1, 0]);
-  const heroY = useTransform(heroScroll, [0, 1], [0, 150]);
-  const heroRotate = useTransform(heroScroll, [0, 1], [0, -5]);
-
-  // Lenis smooth scroll
+  // Smooth scrolling (skipped when the visitor prefers reduced motion)
   useEffect(() => {
-    const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
-    function raf(time: number) { lenis.raf(time); requestAnimationFrame(raf); }
-    requestAnimationFrame(raf);
-    return () => lenis.destroy();
-  }, []);
+    if (reduce) return;
+    const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
+    lenisRef.current = lenis;
+    let id = requestAnimationFrame(function raf(time: number) {
+      lenis.raf(time);
+      id = requestAnimationFrame(raf);
+    });
+    return () => { cancelAnimationFrame(id); lenis.destroy(); lenisRef.current = null; };
+  }, [reduce]);
 
-  // Mobile detect
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  // Active section
+  // Navbar state + active section
   useEffect(() => {
     const onScroll = () => {
-      for (const s of [...SECTIONS].reverse()) {
-        const el = document.getElementById(s);
-        if (el && el.getBoundingClientRect().top < 300) { setActive(s); break; }
+      setScrolled(window.scrollY > 24);
+      let current = "";
+      for (const s of SECTIONS) {
+        const el = document.getElementById(s.id);
+        if (el && el.getBoundingClientRect().top < window.innerHeight * 0.4) current = s.id;
       }
+      setActive(current);
     };
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Lock body on menu
+  // Lock scrolling while the mobile menu is open; close it on Escape or when resizing to desktop
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (!menuOpen) return;
+    document.body.style.overflow = "hidden";
+    lenisRef.current?.stop();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    const onResize = () => { if (window.innerWidth > 860) setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.body.style.overflow = "";
+      lenisRef.current?.start();
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+    };
   }, [menuOpen]);
 
   const scrollTo = useCallback((id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setMenuOpen(false);
+    // wait a frame so the menu's scroll lock is released first
+    requestAnimationFrame(() => {
+      const target = id === "home" ? 0 : document.getElementById(id);
+      if (target === null) return;
+      if (lenisRef.current) {
+        lenisRef.current.start();
+        lenisRef.current.scrollTo(target, { offset: -80 });
+      } else if (typeof target === "number") {
+        window.scrollTo({ top: 0 });
+      } else {
+        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 80 });
+      }
+    });
   }, []);
 
-  const onPreloaderDone = useCallback(() => setLoaded(true), []);
-
-
   return (
-    <>
-      {/* PRELOADER */}
-      <AnimatePresence mode="wait">
-        {!loaded && <Preloader onDone={onPreloaderDone} />}
-      </AnimatePresence>
+    <MotionConfig reducedMotion="user">
+      <div className="app">
+        <motion.div className="scroll-progress" style={{ scaleX: progress }} />
+        <div className="bg" aria-hidden="true">
+          <div className="bg-grid" />
+          <div className="bg-glow g1" />
+          <div className="bg-glow g2" />
+        </div>
 
-      {loaded && (
-        <div className="app">
-          {/* Custom cursor (desktop only) */}
-          {!isMobile && <CustomCursor />}
-
-          {/* Scroll progress */}
-          <motion.div className="scroll-progress" style={{ scaleX: progressX }} />
-
-          {/* ─── NAVBAR ─── */}
-          <motion.nav className="navbar"
-            initial={{ y: -80 }} animate={{ y: 0 }}
-            transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        {/* ─── NAV ─── */}
+        <header className={`nav ${scrolled || menuOpen ? "solid" : ""}`}>
+          <button className="nav-logo" onClick={() => scrollTo("home")} aria-label="Back to top">
+            <span className="logo-mark">SP</span>
+            <span className="logo-text">Sam Prakash</span>
+          </button>
+          <nav className="nav-links" aria-label="Sections">
+            {SECTIONS.map((s) => (
+              <button key={s.id} className={`nav-link ${active === s.id ? "active" : ""}`}
+                onClick={() => scrollTo(s.id)}
+              >
+                {active === s.id && (
+                  <motion.span layoutId="nav-pill" className="nav-pill"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }} />
+                )}
+                <span>{s.label}</span>
+              </button>
+            ))}
+          </nav>
+          <a href={RESUME_URL} download="Sam_Prakash_Resume.pdf" className="btn btn-sm nav-resume">
+            <FiDownload size={13} /> Resume
+          </a>
+          <button className="burger" onClick={() => setMenuOpen((o) => !o)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen}
           >
-            <Magnetic>
-              <div className="nav-logo" onClick={() => scrollTo("home")}>
-                <span className="logo-dot" /><span>SAM PRAKASH</span>
-              </div>
-            </Magnetic>
+            {menuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+          </button>
+        </header>
 
-            <div className="nav-links">
-              {SECTIONS.map((s) => (
-                <Magnetic key={s} strength={0.2}>
-                  <button className={`nav-link ${active === s ? "active" : ""}`}
-                    onClick={() => scrollTo(s)}
-                  >{s}</button>
-                </Magnetic>
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div className="mob-menu"
+              initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: EASE }}
+            >
+              {SECTIONS.map((s, i) => (
+                <button key={s.id} className="mob-link" onClick={() => scrollTo(s.id)}>
+                  <span className="mob-num">0{i + 1}</span>{s.label}
+                </button>
+              ))}
+              <a href={RESUME_URL} download="Sam_Prakash_Resume.pdf" className="btn btn-primary mob-resume">
+                <FiDownload size={15} /> Download resume
+              </a>
+              <div className="mob-socials">
+                {socials.map((s) => (
+                  <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.name}>
+                    <s.icon size={18} />
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <main>
+          {/* ─── HERO ─── */}
+          <section id="home" className="hero container">
+            <motion.a href={`mailto:${EMAIL}`} className="badge"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: EASE }}
+            >
+              <span className="badge-dot" /> Member of Technical Staff at Zoho · {LOCATION}
+            </motion.a>
+
+            <h1 className="hero-title">
+              {["Sam Prakash", "builds backend systems", "that hold up."].map((line, i) => (
+                <span key={line} className="line-clip">
+                  <motion.span className={`line ${i === 0 ? "" : i === 1 ? "soft" : "accent"}`}
+                    initial={{ y: "110%" }} animate={{ y: 0 }}
+                    transition={{ duration: 0.9, delay: 0.1 + i * 0.1, ease: EASE }}
+                  >{line}</motion.span>
+                </span>
+              ))}
+            </h1>
+
+            <motion.p className="hero-sub"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.5, ease: EASE }}
+            >
+              Backend engineer working across <strong>Java, Spring Boot and C/C++</strong> — from crash-analysis
+              tooling at ManageEngine Endpoint Central to event-driven pipelines and RAG services.
+            </motion.p>
+
+            <motion.div className="hero-ctas"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.62, ease: EASE }}
+            >
+              <button className="btn btn-primary" onClick={() => scrollTo("projects")}>
+                View projects <FiArrowUpRight size={16} />
+              </button>
+              <a href={RESUME_URL} download="Sam_Prakash_Resume.pdf" className="btn">
+                <FiDownload size={15} /> Download resume
+              </a>
+              <div className="hero-socials">
+                {socials.map((s) => (
+                  <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer"
+                    className="icon-btn" aria-label={s.name} title={s.name}
+                  ><s.icon size={16} /></a>
+                ))}
+              </div>
+            </motion.div>
+          </section>
+
+          <div className="marquee" aria-hidden="true">
+            <div className="marquee-track">
+              {[...marquee, ...marquee].map((m, i) => (
+                <span key={i} className="marquee-item">{m}<span className="marquee-sep">✦</span></span>
               ))}
             </div>
+          </div>
 
-            <Magnetic>
-              <a href="/Sam_Prakash_Latest_Resume.pdf" target="_blank" rel="noopener noreferrer" className="nav-resume">
-                <FaDownload size={11} /> Resume
-              </a>
-            </Magnetic>
-
-            <button className="burger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
-              <span className={menuOpen ? "open" : ""} />
-              <span className={menuOpen ? "open" : ""} />
-            </button>
-          </motion.nav>
-
-          {/* ─── MOBILE MENU ─── */}
-          <AnimatePresence>
-            {menuOpen && (
-              <motion.div className="mob-menu"
-                initial={{ clipPath: "circle(0% at 95% 3%)" }}
-                animate={{ clipPath: "circle(150% at 95% 3%)" }}
-                exit={{ clipPath: "circle(0% at 95% 3%)" }}
-                transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
-              >
-                {SECTIONS.map((s, i) => (
-                  <motion.button key={s} className="mob-link"
-                    initial={{ opacity: 0, x: -40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + i * 0.06 }}
-                    onClick={() => { scrollTo(s); setMenuOpen(false); }}
-                  >
-                    <span className="mob-num">0{i + 1}</span>{s}
-                  </motion.button>
+          {/* ─── ABOUT ─── */}
+          <section id="about" className="sec container">
+            <SectionHead num="01" label="About">Engineer by training, <em>backend by choice.</em></SectionHead>
+            <div className="bento">
+              <Card className="b-bio">
+                <p className="bio-lead">
+                  I'm a backend engineer at <strong>Zoho</strong>, on the ManageEngine Endpoint Central team.
+                </p>
+                <p className="bio-text">
+                  My day-to-day is the unglamorous, high-leverage layer: crash-triage dashboards, stack-trace
+                  deduplication, WinDbg-driven dump analysis, a Solaris agent, and CVE remediation across a C/C++
+                  stack. Outside work I build Spring Boot systems around Kafka, pgvector and LLMs.
+                </p>
+                <p className="bio-text">
+                  Before Zoho I spent close to two years at <strong>Cognizant</strong> working on full-stack Java
+                  and MuleSoft API-led connectivity.
+                </p>
+              </Card>
+              {stats.map((s, i) => (
+                <Card key={s.label} className="b-stat" delay={0.06 * (i + 1)}>
+                  <span className="stat-num"><Counter end={s.n} suffix={s.s} /></span>
+                  <span className="stat-label">{s.label}</span>
+                </Card>
+              ))}
+              <Card className="b-edu" delay={0.1}>
+                <h3 className="card-title"><FiBookOpen size={15} /> Education</h3>
+                {education.map((e) => (
+                  <div key={e.title} className="entry">
+                    <strong>{e.title}</strong>
+                    <span>{e.place}</span>
+                    <span className="mono">{e.period}</span>
+                  </div>
                 ))}
-                <motion.div className="mob-socials" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
-                  {socials.map((s, i) => (
-                    <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: s.color }}><s.icon size={22} /></a>
-                  ))}
-                </motion.div>
-                <motion.a
-                  href="/Sam_Prakash_Latest_Resume.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mob-resume"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
-                >
-                  <FaDownload size={14} /> Download Resume
-                </motion.a>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* ━━━━━ HERO ━━━━━ */}
-          <section id="home" className="hero" ref={heroRef}>
-            <div className="hero-bg">
-              <div className="hero-grid-lines" />
-              <div className="hero-orb orb1" />
-              <div className="hero-orb orb2" />
-              <div className="hero-orb orb3" />
+              </Card>
+              <Card className="b-ach" delay={0.14}>
+                <h3 className="card-title"><FiAward size={15} /> Achievements</h3>
+                {achievements.map((a) => (
+                  <div key={a.label} className="ach">
+                    <span className="ach-score">{a.score}</span><span>{a.label}</span>
+                  </div>
+                ))}
+              </Card>
+              <Card className="b-cert" delay={0.18}>
+                <h3 className="card-title"><FiAward size={15} /> Certifications</h3>
+                <ul className="cert-list">
+                  {certifications.map((c) => <li key={c}>{c}</li>)}
+                </ul>
+              </Card>
             </div>
-
-            <motion.div className="hero-inner" style={{ scale: heroScale, opacity: heroOpacity, y: heroY, rotateX: heroRotate }}>
-              <motion.div className="hero-eyebrow"
-                initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.8 }}
-              >
-                <span className="eyebrow-dot" /> BACKEND ENGINEER · JAVA · SPRING BOOT · C++
-              </motion.div>
-
-              <h1 className="hero-name">
-                <span className="hero-name-line">
-                {"SAM".split("").map((ch, i) => (
-                  <motion.span key={`a${i}`} className="hero-char"
-                    initial={{ opacity: 0, y: 100, rotateX: -80 }}
-                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                    transition={{ delay: 0.6 + i * 0.06, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                  >{ch}</motion.span>
-                ))}
-                </span>
-                <br />
-                <span className="hero-name-line">
-                {"PRAKASH".split("").map((ch, i) => (
-                  <motion.span key={`b${i}`} className="hero-char outline"
-                    initial={{ opacity: 0, y: 100, rotateX: -80 }}
-                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                    transition={{ delay: 0.85 + i * 0.05, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                  >{ch}</motion.span>
-                ))}
-                </span>
-              </h1>
-
-              <motion.p className="hero-sub"
-                initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.5, duration: 0.8 }}
-              >
-                Crafting scalable systems & automation tools at <strong>Zoho</strong> & <strong>Cognizant</strong> — 3+ years
-              </motion.p>
-
-              <motion.div className="hero-ctas"
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.8 }}
-              >
-                <Magnetic>
-                  <button className="btn-fill" onClick={() => scrollTo("projects")}>
-                    Explore Work <FaArrowRight size={13} />
-                  </button>
-                </Magnetic>
-                <Magnetic>
-                  <a href="mailto:msamprakash05@gmail.com" className="btn-outline">Say Hello</a>
-                </Magnetic>
-              </motion.div>
-
-              <motion.div className="hero-socials"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.1 }}
-              >
-                {socials.map((s, i) => (
-                  <Magnetic key={i} strength={0.4}>
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="hero-soc" style={{ color: s.color }}>
-                      <s.icon size={19} />
-                    </a>
-                  </Magnetic>
-                ))}
-              </motion.div>
-            </motion.div>
-
-            <motion.div className="scroll-arrow"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.4 }}
-            >
-              <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.6, repeat: Infinity }}>
-                <FaArrowDown size={14} />
-              </motion.div>
-              <span>SCROLL</span>
-            </motion.div>
           </section>
 
+          {/* ─── SKILLS ─── */}
+          <section id="skills" className="sec container">
+            <SectionHead num="02" label="Skills">The stack I <em>reach for.</em></SectionHead>
+            <div className="skill-grid">
+              {skillGroups.map((g, i) => (
+                <Card key={g.title} className="skill-card" delay={0.05 * i}>
+                  <h3 className="card-title"><g.icon size={15} /> {g.title}</h3>
+                  <div className="chips">
+                    {g.items.map((it) => (
+                      <span key={it.name} className="chip">
+                        {it.icon && <it.icon size={13} color={it.color} />}{it.name}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
 
-          {/* ━━━━━ ABOUT ━━━━━ */}
-          <section id="about" className="sec">
-            <div className="container">
-              <Reveal>
-                <span className="sec-label"><span className="sec-num">01</span><span className="sec-line" /> ABOUT ME</span>
-              </Reveal>
-
-              <div className="about-split">
-                <div className="about-left">
-                  <Reveal delay={0.1}>
-                    <h2 className="about-heading">
-                      <TextReveal>I build systems</TextReveal><br />
-                      <TextReveal delay={0.2}>that matter.</TextReveal>
-                    </h2>
-                  </Reveal>
-                  <Reveal delay={0.2}>
-                    <p className="about-text">
-                      Backend engineer with 3+ years at <strong>Zoho</strong> & <strong>Cognizant</strong>.
-                      Building scalable Java apps, crash analysis pipelines, and system-level C/C++ tools.
-                      Currently at ManageEngine Endpoint Central — crash dump analysis with Zoho Desk,
-                      unified JSON frameworks, and Grafana dashboards.
-                    </p>
-                  </Reveal>
-                  <Reveal delay={0.3}>
-                    <div className="about-stack">
-                      {[skills[0], skills[1], skills[2], skills[12], skills[11], skills[13]].map((s, i) => (
-                        <div key={i} className="stack-icon"><s.icon size={22} color={s.color} /></div>
-                      ))}
+          {/* ─── PROJECTS ─── */}
+          <section id="projects" className="sec container">
+            <SectionHead num="03" label="Projects">Things I've <em>built.</em></SectionHead>
+            <div className="proj-list">
+              {projects.map((p, i) => (
+                <Card key={p.title} className="proj" delay={0.06 * i}>
+                  <div className="proj-side">
+                    <span className="proj-num">0{i + 1}</span>
+                    <span className="proj-kind">{p.kind}</span>
+                  </div>
+                  <div className="proj-main">
+                    <h3 className="proj-title">{p.title}</h3>
+                    <p className="proj-summary">{p.summary}</p>
+                    <ul className="points">
+                      {p.points.map((pt) => <li key={pt}>{pt}</li>)}
+                    </ul>
+                    <div className="chips">
+                      {p.tech.map((t) => <span key={t} className="chip chip-sm">{t}</span>)}
                     </div>
-                  </Reveal>
-                </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            <Reveal className="proj-more">
+              <a href={socials[1].url} target="_blank" rel="noopener noreferrer" className="link">
+                More on GitHub <FiArrowUpRight size={15} />
+              </a>
+            </Reveal>
+          </section>
 
-                <div className="about-right">
-                  {stats.map((d, i) => (
-                    <Reveal key={i} className="stat-card" delay={0.15 + i * 0.08}>
-                      <span className="stat-emoji">{d.emoji}</span>
-                      <span className="stat-big"><Counter end={d.n} suffix={d.s} /></span>
-                      <span className="stat-label">{d.label}</span>
-                    </Reveal>
-                  ))}
-                </div>
-              </div>
+          {/* ─── EXPERIENCE ─── */}
+          <section id="experience" className="sec container">
+            <SectionHead num="04" label="Experience">Where I've <em>worked.</em></SectionHead>
+            <div className="timeline">
+              {experiences.map((e, i) => (
+                <Reveal key={e.role + e.period} className="tl-item" delay={0.05 * i}>
+                  <div className={`tl-dot ${e.current ? "now" : ""}`} />
+                  <div className="tl-meta">
+                    <span className="mono">{e.period}</span>
+                    <span className="tl-loc"><FiMapPin size={11} /> {e.location}</span>
+                  </div>
+                  <div className="tl-body">
+                    <h3 className="tl-role">
+                      {e.role} {e.current && <span className="now-tag">Current</span>}
+                    </h3>
+                    <p className="tl-co">{e.company}{e.team && <span> · {e.team}</span>}</p>
+                    <ul className="points">
+                      {e.points.map((pt) => <li key={pt}>{pt}</li>)}
+                    </ul>
+                    <div className="chips">
+                      {e.tags.map((t) => <span key={t} className="chip chip-sm">{t}</span>)}
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
             </div>
           </section>
 
-          {/* ━━━━━ SKILLS ━━━━━ */}
-          <section id="skills" className="sec">
-            <div className="container">
-              <Reveal>
-                <span className="sec-label"><span className="sec-num">02</span><span className="sec-line" /> SKILLS & TOOLS</span>
-              </Reveal>
-              <Reveal delay={0.1}>
-                <h2 className="sec-heading"><TextReveal>My toolkit.</TextReveal></h2>
-              </Reveal>
-
-              <div className="skills-grid">
-                {skills.map((skill, i) => {
-                  const Icon = skill.icon;
-                  return (
-                    <Reveal key={i} delay={i * 0.025} y={40}>
-                      <motion.div className="skill-hex" whileHover={{ scale: 1.12, y: -6 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                        style={{ "--sc": skill.color } as React.CSSProperties}
-                      >
-                        <div className="hex-icon"><Icon size={24} color={skill.color} /></div>
-                        <span className="hex-label">{skill.name}</span>
-                        <div className="hex-glow" />
-                      </motion.div>
-                    </Reveal>
-                  );
-                })}
+          {/* ─── CONTACT ─── */}
+          <section id="contact" className="sec container">
+            <Card className="contact">
+              <span className="sec-label"><span className="sec-num">05</span>Contact</span>
+              <h2 className="contact-title">Let's build something <em>together.</em></h2>
+              <p className="contact-sub">
+                Open to backend engineering roles and interesting problems. Email is the fastest way to reach me.
+              </p>
+              <div className="contact-ctas">
+                <a href={`mailto:${EMAIL}`} className="btn btn-primary"><FiMail size={15} /> {EMAIL}</a>
+                <a href={`tel:${PHONE.replace(/\s/g, "")}`} className="btn"><FiPhone size={15} /> {PHONE}</a>
               </div>
-
-              <Reveal delay={0.2}>
-                <div className="chips-row">
-                  {concepts.map((c, i) => (
-                    <Magnetic key={i} strength={0.15}>
-                      <span className="chip">{c}</span>
-                    </Magnetic>
-                  ))}
-                </div>
-              </Reveal>
-            </div>
-          </section>
-
-          {/* ━━━━━ PROJECTS ━━━━━ */}
-          <ProjectsSection />
-
-          {/* ━━━━━ EXPERIENCE ━━━━━ */}
-          <section id="experience" className="sec">
-            <div className="container">
-              <Reveal>
-                <span className="sec-label"><span className="sec-num">04</span><span className="sec-line" /> EXPERIENCE</span>
-              </Reveal>
-              <Reveal delay={0.1}>
-                <h2 className="sec-heading"><TextReveal>Where I've worked.</TextReveal></h2>
-              </Reveal>
-
-              <div className="exp-list">
-                {experiences.map((exp, i) => (
-                  <Reveal key={i} delay={i * 0.1}>
-                    <motion.div className={`exp-row ${expOpen === i ? "open" : ""}`}
-                      onClick={() => setExpOpen(expOpen === i ? -1 : i)}
-                      whileHover={{ x: 6 }}
-                    >
-                      <div className="exp-top">
-                        <div className="exp-left">
-                          <div className="exp-bar" style={{ background: exp.color }} />
-                          <div>
-                            <h3 className="exp-role">{exp.role}</h3>
-                            <p className="exp-co" style={{ color: exp.color }}>{exp.company}</p>
-                            {exp.team && <p className="exp-team">{exp.team}</p>}
-                          </div>
-                        </div>
-                        <div className="exp-right">
-                          <span className="exp-date">{exp.period}</span>
-                          <span className="exp-loc"><FaMapMarkerAlt size={10} /> {exp.location}</span>
-                        </div>
-                        <span className="exp-arrow">{expOpen === i ? <FaChevronUp /> : <FaChevronDown />}</span>
-                      </div>
-                      <AnimatePresence>
-                        {expOpen === i && (
-                          <motion.div className="exp-body"
-                            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4 }}
-                          >
-                            <ul className="exp-pts">
-                              {exp.points.map((pt, j) => <li key={j}>{pt}</li>)}
-                            </ul>
-                            <div className="exp-chips">
-                              {exp.tags.map((t, j) => <span key={j} className="chip sm">{t}</span>)}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  </Reveal>
+              <div className="contact-links">
+                {socials.map((s) => (
+                  <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer" className="profile">
+                    <s.icon size={16} />
+                    <span className="profile-name">{s.name}</span>
+                    <span className="profile-handle">@{s.handle}</span>
+                    <FiArrowUpRight size={14} className="profile-arrow" />
+                  </a>
                 ))}
               </div>
-
-              {/* Info bento */}
-              <div className="info-bento">
-                <Reveal className="info-card">
-                  <h3 className="info-title">🎓 Education</h3>
-                  <div className="info-entry"><strong>BE Mechatronics</strong><span>Thiagarajar College of Engineering, Madurai · 2018–2022</span></div>
-                  <div className="info-entry"><strong>HSC — Amir Jamal HSS</strong><span>2017–2018 · <em className="gold">200/200 Maths 🏅</em></span></div>
-                </Reveal>
-                <Reveal className="info-card" delay={0.05}>
-                  <h3 className="info-title">🏆 Achievements</h3>
-                  <div className="achiev"><span className="achiev-badge">200/200</span> Maths — 12th HSC</div>
-                  <div className="achiev"><span className="achiev-badge">100/100</span> Maths — 10th SSLC</div>
-                </Reveal>
-                <Reveal className="info-card" delay={0.1}>
-                  <h3 className="info-title">📜 Certifications</h3>
-                  {["Java SE — HackerRank", "Spring Boot — Udemy", "Problem Solving — HackerRank", "SQL — HackerRank"].map((c, i) => (
-                    <div key={i} className="cert-row"><span className="cert-dot" />{c}</div>
-                  ))}
-                </Reveal>
-                <Reveal className="info-card" delay={0.15}>
-                  <h3 className="info-title">🔗 Profiles</h3>
-                  {[
-                    { name: "LeetCode", user: "Sam_Prakash", url: "https://leetcode.com/u/Sam_Prakash/", color: "#ffa116", Icon: socials[2].icon },
-                    { name: "HackerRank", user: "msamprakash05", url: "https://hackerrank.com/profile/msamprakash05", color: "#2ec866", Icon: socials[3].icon },
-                    { name: "GitHub", user: "Sam-Prakash-M", url: "https://github.com/Sam-Prakash-M", color: "#e6edf3", Icon: socials[1].icon },
-                  ].map((p, i) => (
-                    <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" className="profile-link">
-                      <p.Icon size={15} color={p.color} /><span>{p.name}</span><span className="profile-user">@{p.user}</span>
-                    </a>
-                  ))}
-                </Reveal>
-              </div>
-            </div>
+            </Card>
           </section>
+        </main>
 
-          {/* ━━━━━ CONTACT ━━━━━ */}
-          <section id="contact" className="sec contact-sec">
-            <div className="container">
-              <Reveal>
-                <span className="sec-label center"><span className="sec-num">05</span><span className="sec-line" /> CONTACT</span>
-              </Reveal>
-              <Reveal delay={0.1}>
-                <h2 className="contact-heading">
-                  <TextReveal className="contact-line">Let's work</TextReveal><br />
-                  <TextReveal className="contact-line em" delay={0.15}>together.</TextReveal>
-                </h2>
-              </Reveal>
-              <Reveal delay={0.2}>
-                <p className="contact-sub">Open to Java backend roles, engineering challenges, or collaborations.</p>
-              </Reveal>
-              <Reveal delay={0.25}>
-                <div className="contact-blocks">
-                  <a href="mailto:msamprakash05@gmail.com" className="c-block">
-                    <FaEnvelope size={20} /><span className="c-label">EMAIL</span><span className="c-val">msamprakash05@gmail.com</span>
-                  </a>
-                  <div className="c-block">
-                    <FaPhone size={20} /><span className="c-label">PHONE</span><span className="c-val">+91 6385812669</span>
-                  </div>
-                  <div className="c-block">
-                    <FaMapMarkerAlt size={20} /><span className="c-label">LOCATION</span><span className="c-val">Chennai, India</span>
-                  </div>
-                </div>
-              </Reveal>
-              <Reveal delay={0.3}>
-                <div className="contact-socs">
-                  {socials.map((s, i) => (
-                    <Magnetic key={i} strength={0.35}>
-                      <a href={s.url} target="_blank" rel="noopener noreferrer" className="c-soc"
-                        style={{ "--soc": s.color } as React.CSSProperties}
-                      ><s.icon size={18} /><span>{s.name}</span></a>
-                    </Magnetic>
-                  ))}
-                </div>
-              </Reveal>
-              <Reveal delay={0.35}>
-                <Magnetic>
-                  <a href="mailto:msamprakash05@gmail.com" className="btn-fill big">
-                    <FaEnvelope /> Send a Message <FaArrowRight />
-                  </a>
-                </Magnetic>
-              </Reveal>
-            </div>
-          </section>
-
-          {/* FOOTER */}
-          <footer className="footer">
-            <div className="container footer-inner">
-              <div className="footer-brand"><span className="logo-dot" /><span>SAM PRAKASH</span></div>
-              <p className="footer-copy">© 2026 · Built with ❤️ and Java</p>
-              <div className="footer-socs">
-                {socials.map((s, i) => (
-                  <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"><s.icon size={15} /></a>
-                ))}
-              </div>
-            </div>
-          </footer>
-        </div>
-      )}
-    </>
+        <footer className="footer container">
+          <span>© {new Date().getFullYear()} Sam Prakash M</span>
+          <span className="footer-loc"><FiMapPin size={12} /> {LOCATION}</span>
+          <button className="link" onClick={() => scrollTo("home")}>Back to top ↑</button>
+        </footer>
+      </div>
+    </MotionConfig>
   );
 }

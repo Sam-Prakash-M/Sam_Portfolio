@@ -1,14 +1,19 @@
 /* ===== RESET & BASE ===== */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* No CSS scroll-behavior here: Lenis drives smooth scrolling, and the two fight each other. */
 html {
-  scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  color-scheme: dark;
 }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-stopped { overflow: hidden; }
 
-body { margin: 0; overflow-x: hidden; }
+body { margin: 0; background: #09090b; overflow-x: hidden; }
 
-::selection { background: rgba(99, 102, 241, .3); color: #fff; }
+::selection { background: rgba(200, 245, 96, .3); color: #fff; }
 
 #root { min-height: 100vh; }
